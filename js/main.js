@@ -525,22 +525,28 @@ function initUIControls() {
             saveConfig();
         });
 
-        // Update elliptical movement rate
+        // Update elliptical movement rate (displayed as percentage in UI but stored as 0-1)
         if (ellipticalMovementRateInput) {
+            // Convert internal value (0-1) to percentage (0-100) for display
+            const displayValue = ((CONFIG.ellipticalMovementRate || 0.1) * 100).toFixed(0);
             ellipticalMovementRateInput.value = CONFIG.ellipticalMovementRate || 0.1;
-            document.getElementById('ellipticalMovementRateValue').textContent = CONFIG.ellipticalMovementRate || 0.1;
-
+            document.getElementById('ellipticalMovementRateValue').textContent = displayValue;
+            
             ellipticalMovementRateInput.addEventListener('input', (e) => {
+                // Store the actual 0-1 value in the config
                 const value = parseFloat(e.target.value);
                 CONFIG.ellipticalMovementRate = value;
-                document.getElementById('ellipticalMovementRateValue').textContent = value.toFixed(2);
-
+                
+                // Display as percentage (0-100)
+                const displayValue = (value * 100).toFixed(0);
+                document.getElementById('ellipticalMovementRateValue').textContent = displayValue;
+                
                 if (starfield) {
                     starfield.options.ellipticalMovementRate = value;
                     // Recreate stars to apply the new movement rate
                     starfield.createStars();
                 }
-
+                
                 saveConfig();
             });
         }
