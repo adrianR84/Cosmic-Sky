@@ -33,7 +33,7 @@ class Starfield {
             backgroundColor: '#000428', // Default background color
             backgroundOpacity: 1, // Default opacity (0-1)
             ellipseEnabled: false, // Default to original movement
-            ellipticalMovementRate: 0.1, // 10% of stars will have elliptical movement
+            ellipticalMovementRate: options.ellipticalMovementRate !== undefined ? options.ellipticalMovementRate : 0.1,
             ...options
         };
 

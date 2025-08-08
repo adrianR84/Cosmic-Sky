@@ -45,6 +45,7 @@ const DEFAULT_CONFIG = {
     clusterCount: 5,
     trailFadeSpeed: 0.2,
     ellipseMovement: false,
+    ellipticalMovementRate: 0.1, // 10% of stars will have elliptical movement by default
     bgColor: '#000428',
     bgOpacity: 1.0,
     parallax: {
@@ -231,6 +232,7 @@ function init() {
             backgroundColor: 'transparent',
             trailFadeSpeed: CONFIG.trailFadeSpeed,
             ellipseMovement: false, // Default to original movement
+            ellipticalMovementRate: CONFIG.ellipticalMovementRate, // Use configured elliptical movement rate
             clusterEnabled: CONFIG.clusterEnabled !== undefined ? CONFIG.clusterEnabled : true, // Respect cluster toggle, default to true
         };
 
@@ -322,11 +324,11 @@ function updateUI() {
     }
 
     // Update star movement speed display
-    const starMovementSpeedEl = document.getElementById('starMovementSpeed');
-    if (starMovementSpeedEl) {
-        starMovementSpeedEl.value = CONFIG.starMovementSpeed;
-        document.getElementById('starMovementSpeedValue').textContent = CONFIG.starMovementSpeed.toFixed(2);
-    }
+    // const starMovementSpeedEl = document.getElementById('starMovementSpeed');
+    // if (starMovementSpeedEl) {
+    //     starMovementSpeedEl.value = CONFIG.starMovementSpeed;
+    //     document.getElementById('starMovementSpeedValue').textContent = CONFIG.starMovementSpeed.toFixed(2);
+    // }
 
     // Update max stars per cluster display
     const maxStarsPerClusterEl = document.getElementById('maxStarsPerCluster');
@@ -350,14 +352,14 @@ function updateUI() {
     }
 
     // Update ellipse movement toggle
-    const ellipseToggle = document.getElementById('ellipseMovement');
-    if (ellipseToggle) {
-        ellipseToggle.checked = CONFIG.ellipseMovement;
-        const starMovementSpeedContainer = document.getElementById('starMovementSpeedContainer');
-        if (starMovementSpeedContainer) {
-            starMovementSpeedContainer.style.display = CONFIG.ellipseMovement ? 'block' : 'none';
-        }
-    }
+    // const ellipseToggle = document.getElementById('ellipseMovement');
+    // if (ellipseToggle) {
+    //     ellipseToggle.checked = CONFIG.ellipseMovement;
+    //     const starMovementSpeedContainer = document.getElementById('starMovementSpeedContainer');
+    //     if (starMovementSpeedContainer) {
+    //         starMovementSpeedContainer.style.display = CONFIG.ellipseMovement ? 'block' : 'none';
+    //     }
+    // }
 
     // Update background color and opacity
     const bgColorPicker = document.getElementById('bgColor');
@@ -387,17 +389,21 @@ function initUIControls() {
     const starCountInput = document.getElementById('starCount');
     const distanceInput = document.getElementById('connectionDistance');
     const speedInput = document.getElementById('animationSpeed');
-    const starMovementSpeedInput = document.getElementById('starMovementSpeed');
     const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
 
     // Parallax controls (declared later where used)
     const clusterCountInput = document.getElementById('clusterCount');
     const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
-    const ellipseToggle = document.getElementById('ellipseMovement');
     const bgColorPicker = document.getElementById('bgColor');
     const bgOpacitySlider = document.getElementById('bgOpacity');
     const bgColorValue = document.getElementById('bgColorValue');
     const opacityValue = document.getElementById('opacityValue');
+
+    // Ellipse movement controls
+    const ellipseToggle = document.getElementById('ellipseMovement');
+    const ellipseControls = document.getElementById('ellipseControls');
+    const ellipticalMovementRateInput = document.getElementById('ellipticalMovementRate');
+    const starMovementSpeedInput = document.getElementById('starMovementSpeed');
 
     // Set initial values from CONFIG and update displays
     if (starCountInput) {
@@ -498,19 +504,71 @@ function initUIControls() {
         });
     }
 
-    if (ellipseToggle) {
+    // Ellipse movement controls initialization
+    if (ellipseToggle && ellipseControls) {
+        // Set initial state from config
+        ellipseToggle.checked = CONFIG.ellipseMovement || false;
+        ellipseControls.style.display = ellipseToggle.checked ? 'block' : 'none';
+
+        // Toggle ellipse movement and controls visibility
         ellipseToggle.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
-            const starMovementSpeedContainer = document.getElementById('starMovementSpeedContainer');
-            if (starMovementSpeedContainer) {
-                starMovementSpeedContainer.style.display = isChecked ? 'block' : 'none';
-            }
             CONFIG.ellipseMovement = isChecked;
+            ellipseControls.style.display = isChecked ? 'block' : 'none';
+
             if (starfield) {
-                starfield.setEllipseMovement(isChecked);
+                starfield.options.ellipseEnabled = isChecked;
+                // Recreate stars to apply the new movement type
+                starfield.createStars();
             }
+
             saveConfig();
         });
+
+        // Update elliptical movement rate
+        if (ellipticalMovementRateInput) {
+            ellipticalMovementRateInput.value = CONFIG.ellipticalMovementRate || 0.1;
+            document.getElementById('ellipticalMovementRateValue').textContent = CONFIG.ellipticalMovementRate || 0.1;
+
+            ellipticalMovementRateInput.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                CONFIG.ellipticalMovementRate = value;
+                document.getElementById('ellipticalMovementRateValue').textContent = value.toFixed(2);
+
+                if (starfield) {
+                    starfield.options.ellipticalMovementRate = value;
+                    // Recreate stars to apply the new movement rate
+                    starfield.createStars();
+                }
+
+                saveConfig();
+            });
+        }
+
+        // Update star movement speed
+        if (starMovementSpeedInput) {
+            starMovementSpeedInput.value = CONFIG.starMovementSpeed || 0.2;
+            document.getElementById('starMovementSpeedValue').textContent = (CONFIG.starMovementSpeed || 0.2).toFixed(2);
+
+            starMovementSpeedInput.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                CONFIG.starMovementSpeed = value;
+                document.getElementById('starMovementSpeedValue').textContent = value.toFixed(2);
+
+                if (starfield) {
+                    // Update the starfield's movement speed
+                    starfield.options.starMovementSpeed = value;
+                    // Update all stars' movement speed
+                    starfield.stars.forEach(star => {
+                        if (star.animation) {
+                            star.animation.timeScale(value);
+                        }
+                    });
+                }
+
+                saveConfig();
+            });
+        }
     }
 
     // Cluster controls toggle
