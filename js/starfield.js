@@ -1,12 +1,24 @@
 /**
- * Manages a collection of stars and their connections using Canvas 2D
+ * Manages a collection of stars and their connections using Canvas 2D.
+ * Handles star creation, animation, rendering, and user interaction.
+ * @class
  */
 class Starfield {
     /**
-     * Create a new starfield
-     * @param {HTMLCanvasElement} canvas - The canvas element to draw on
-     * @param {Object} options - Configuration options
-     * @param {boolean} [options.ellipseMovement=false] - Whether to enable elliptical movement
+     * Create a new Starfield instance.
+     * @param {HTMLCanvasElement} canvas - The canvas element to render on
+     * @param {Object} [options={}] - Configuration options
+     * @param {number} [options.starCount=500] - Total number of stars to create
+     * @param {number} [options.connectionDistance=150] - Maximum distance to draw connections between stars (in pixels)
+     * @param {number} [options.connectionOpacity=0.2] - Opacity of connection lines (0-1)
+     * @param {Object} [options.starColor=null] - Optional fixed color for all stars
+     * @param {string} [options.backgroundColor='#000428'] - Background color of the canvas
+     * @param {number} [options.backgroundOpacity=1] - Background opacity (0-1)
+     * @param {boolean} [options.ellipseEnabled=false] - Whether elliptical movement is enabled
+     * @param {number} [options.ellipticalMovementRate=0.2] - Probability (0-1) of a star having elliptical movement
+     * @param {number} [options.starMovementSpeed=0.5] - Global multiplier for star movement speed
+     * @param {number} [options.maxStarsPerCluster=25] - Maximum stars per cluster
+     * @param {number} [options.clusterCount=5] - Number of star clusters to create
      */
     constructor(canvas, options = {}) {
         this.canvas = canvas;
@@ -21,7 +33,7 @@ class Starfield {
             backgroundColor: '#000428', // Default background color
             backgroundOpacity: 1, // Default opacity (0-1)
             ellipseEnabled: false, // Default to original movement
-            ellipticalMovementRate: 0.2, // 10% of stars will have elliptical movement
+            ellipticalMovementRate: 0.1, // 10% of stars will have elliptical movement
             ...options
         };
 
@@ -41,7 +53,9 @@ class Starfield {
     }
 
     /**
-     * Initialize the starfield
+     * Initialize the starfield by setting up the canvas, creating stars,
+     * and starting the animation loop.
+     * @returns {void}
      */
     init() {
         // Set canvas size
@@ -66,23 +80,23 @@ class Starfield {
      */
     setEllipseMovement(enabled) {
         this.options.ellipseEnabled = enabled;
-        
+
         // Update all stars with the new ellipseEnabled state
         this.stars.forEach(star => {
-            // Only update stars that were originally marked for elliptical movement
-            if (star.ellipseEnabled !== undefined) {
-                // If enabling, initialize parameters if needed
-                if (enabled && !star.ellipseRadiusX) {
-                    star.ellipseRadiusX = 50 + Math.random() * 100; // 50-150px horizontal radius
-                    star.ellipseRadiusY = 30 + Math.random() * 60;  // 30-90px vertical radius
-                    star.ellipseSpeed = 0.0005 + Math.random() * 0.001; // Random speed
-                    star.ellipseAngle = Math.random() * Math.PI * 2; // Random starting angle
-                    star.ellipsePhase = Math.random() * Math.PI * 2; // Random phase offset
-                }
-                
-                // Update the star's ellipseEnabled state based on the global setting
-                star.ellipseEnabled = enabled;
+            // Only enable elliptical movement for stars that were selected at creation
+            const shouldBeEnabled = enabled && star._selectedForEllipse;
+
+            // If enabling, initialize parameters if needed
+            if (enabled && shouldBeEnabled && !star.ellipseRadiusX) {
+                star.ellipseRadiusX = 50 + Math.random() * 100; // 50-150px horizontal radius
+                star.ellipseRadiusY = 30 + Math.random() * 60;  // 30-90px vertical radius
+                star.ellipseSpeed = 0.0005 + Math.random() * 0.001; // Random speed
+                star.ellipseAngle = Math.random() * Math.PI * 2; // Random starting angle
+                star.ellipsePhase = Math.random() * Math.PI * 2; // Random phase offset
             }
+
+            // Update the star's ellipseEnabled state
+            star.ellipseEnabled = shouldBeEnabled;
         });
     }
 
@@ -104,15 +118,14 @@ class Starfield {
     }
 
     /**
-     * Create and position stars
-     */
-    /**
-     * Create star clusters at specified positions
+     * Create clusters of stars at random positions on the canvas.
      * @param {number} count - Number of clusters to create
      * @param {number} width - Canvas width
      * @param {number} height - Canvas height
      * @param {number} starsPerCluster - Number of stars per cluster
-     * @param {number} movementSpeed - Speed of star movement
+     * @param {number} movementSpeed - Base movement speed multiplier
+     * @private
+     * @returns {void}
      */
     createClusters(count, width, height, starsPerCluster, movementSpeed) {
         const clusters = [];
@@ -163,6 +176,12 @@ class Starfield {
         });
     }
 
+    /**
+     * Create and distribute stars across the canvas.
+     * Creates both clustered and randomly distributed stars based on configuration.
+     * @private
+     * @returns {void}
+     */
     createStars() {
         const { starCount } = this.options;
         const { width, height } = this.canvas;
@@ -239,7 +258,9 @@ class Starfield {
     }
 
     /**
-     * Set up event listeners
+     * Set up event listeners for mouse movement and window resizing.
+     * @private
+     * @returns {void}
      */
     setupEventListeners() {
         // Mouse movement
@@ -337,7 +358,8 @@ class Starfield {
     }
 
     /**
-     * Handle window resize
+     * Handle window resize events and update canvas dimensions.
+     * @returns {void}
      */
     resize() {
         const { canvas } = this;
@@ -372,9 +394,11 @@ class Starfield {
 
 
     /**
-     * Update all stars' positions and states
-     * @param {number} time - Current timestamp
-     * @param {number} deltaTime - Time since last frame in ms
+     * Update all stars' positions and states based on the current time.
+     * @param {number} time - Current timestamp in milliseconds
+     * @param {number} deltaTime - Time since last frame in milliseconds
+     * @private
+     * @returns {void}
      */
     updateStars(time, deltaTime) {
         const { connectionDistance } = this.options;
@@ -395,9 +419,11 @@ class Starfield {
     }
 
     /**
-     * Parse color string to RGB object
+     * Parse a CSS color string to an RGB object.
      * @param {string} color - Color string (hex, rgb, or rgba)
      * @returns {Object} Object with r, g, b values (0-255)
+     * @private
+     * @throws {Error} If the color string is invalid
      */
     _parseColor(color) {
         // If it's already an object with r,g,b, return it
@@ -443,8 +469,10 @@ class Starfield {
     }
 
     /**
-     * Animation loop
-     * @param {number} time - Current timestamp
+     * Main animation loop that updates and renders the starfield.
+     * @param {number} [time=0] - Current timestamp in milliseconds
+     * @private
+     * @returns {void}
      */
     animate(time = 0) {
         this.animationId = requestAnimationFrame(this.animate.bind(this));
@@ -471,10 +499,15 @@ class Starfield {
 
         // Draw stars (on top of connections)
         this.drawStars();
+
+        // Update stats display
+        this.updateStats();
     }
 
     /**
-     * Draw all stars
+     * Draw all stars on the canvas.
+     * @private
+     * @returns {void}
      */
     drawStars() {
         this.ctx.save();
@@ -488,7 +521,9 @@ class Starfield {
     }
 
     /**
-     * Draw connections between nearby stars
+     * Draw connections between stars that are within the connection distance.
+     * @private
+     * @returns {void}
      */
     drawConnections() {
         const { connectionDistance, connectionOpacity } = this.options;
@@ -532,7 +567,9 @@ class Starfield {
     }
 
     /**
-     * Update performance stats
+     * Update performance statistics (FPS, connection count).
+     * @private
+     * @returns {void}
      */
     updateStats() {
         const fpsEl = document.getElementById('fps');
@@ -545,7 +582,9 @@ class Starfield {
     }
 
     /**
-     * Clean up resources
+     * Clean up resources and stop animations.
+     * Should be called when the starfield is no longer needed.
+     * @returns {void}
      */
     dispose() {
         // Cancel animation frame

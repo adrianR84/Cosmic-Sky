@@ -1,16 +1,25 @@
 /**
- * Represents a single star in the galaxy visualization
+ * Represents a single star in the galaxy visualization with various animation effects.
+ * Each star can have different visual properties and movement patterns.
  */
 class Star {
     /**
-     * Create a new star
-     * @param {number} x - X coordinate
-     * @param {number} y - Y coordinate
-     * @param {Object} options - Configuration options for the star
-     * @param {number} [options.size=1] - Base size of the star
-     * @param {number} [options.zIndex=0] - Z-index for depth (0-1)
+     * Create a new Star instance.
+     * @param {number} x - The initial x-coordinate of the star
+     * @param {number} y - The initial y-coordinate of the star
+     * @param {Object} [options={}] - Configuration options for the star
+     * @param {number} [options.size=random(0.5,3)] - Base size of the star in pixels
+     * @param {number} [options.zIndex=Math.random()] - Z-index for depth sorting (0-1)
      * @param {number} [options.speed=1] - Animation speed multiplier
-     * @param {boolean} [options.connectToMouse=true] - Whether to connect to mouse
+     * @param {boolean} [options.connectToMouse=true] - Whether the star reacts to mouse proximity
+     * @param {boolean} [options.ellipseEnabled=false] - Whether elliptical movement is enabled
+     * @param {number} [options.ellipticalMovementRate=0.1] - Probability (0-1) of elliptical movement
+     * @param {number} [options.ellipseRadiusX=random(50,150)] - Horizontal radius of elliptical path
+     * @param {number} [options.ellipseRadiusY=random(25,100)] - Vertical radius of elliptical path
+     * @param {number} [options.ellipseSpeed=random(0.0005,0.002)] - Speed of elliptical movement
+     * @param {number} [options.ellipseRotation=random(0,2π)] - Rotation of elliptical path in radians
+     * @param {number} [options.amplitude=random(2,15)] - Amplitude of floating motion
+     * @param {number} [options.frequency=random(0.0003,0.001)] - Frequency of floating motion
      */
     constructor(x, y, options = {}) {
         this.x = x;
@@ -36,9 +45,10 @@ class Star {
         this.phase = Math.PI * 2 * Math.random();
 
         // Enhanced elliptical movement properties
-        // Enable elliptical movement based on the provided rate (defaults to 10% if not specified)
+        // Store whether this star was selected for elliptical movement at creation
         const ellipticalRate = options.ellipticalMovementRate !== undefined ? options.ellipticalMovementRate : 0.1;
-        this.ellipseEnabled = (options.ellipseEnabled !== undefined ? options.ellipseEnabled : false) && Math.random() < ellipticalRate;
+        this._selectedForEllipse = Math.random() < ellipticalRate;
+        this.ellipseEnabled = (options.ellipseEnabled !== undefined ? options.ellipseEnabled : false) && this._selectedForEllipse;
         this.ellipseRadiusX = options.ellipseRadiusX !== undefined ? options.ellipseRadiusX : Utils.randomInRange(50, 150);
         this.ellipseRadiusY = options.ellipseRadiusY !== undefined ? options.ellipseRadiusY : Utils.randomInRange(25, 100);
         this.ellipseSpeed = options.ellipseSpeed !== undefined ? options.ellipseSpeed : Utils.randomInRange(0.0005, 0.002) * this.speed;
@@ -85,10 +95,9 @@ class Star {
     }
 
     /**
-     * Initialize GSAP animations for the star
-     */
-    /**
-     * Start a shooting star animation
+     * Start a shooting star animation from the star's current position.
+     * @param {number} time - Current timestamp for animation timing
+     * @returns {boolean} True if shooting star was started, false if conditions weren't met
      */
     startShooting(time) {
         // Only start shooting if we're under the limit and it's been long enough since last star started
@@ -108,14 +117,14 @@ class Star {
 
         // Schedule next shooting star
         Star.lastShootingStarTime = time;
-        Star.nextShootingStarDelay = 5000 + Math.random() * 8000; // 5-8 seconds
+        Star.nextShootingStarDelay = 2000 + Math.random() * 4000; // 2-6 seconds
 
         return true;
     }
 
     /**
-     * Update blinking effect
-     * @param {number} time - Current timestamp
+     * Update the blinking effect for the star.
+     * @param {number} time - Current timestamp for animation timing
      */
     updateBlinkingEffect(time) {
         // Random chance to start blinking (about once every 10-30 seconds per star on average)
@@ -143,6 +152,10 @@ class Star {
         }
     }
 
+    /**
+     * Initialize GSAP animations for the star's floating and pulsing effects.
+     * @private
+     */
     initAnimations() {
         // Floating animation (only when not in elliptical mode)
         this.floatTween = gsap.to(this, {
@@ -165,6 +178,10 @@ class Star {
             repeat: -1,
             ease: 'sine.inOut',
             yoyoEase: true,
+            /**
+             * Callback for animation repeat events.
+             * @private
+             */
             onRepeat: () => {
                 // Randomly adjust the pulse amount for variation
                 this.pulseAmount = 0.1 + Math.random() * 0.2;
@@ -173,10 +190,10 @@ class Star {
     }
 
     /**
-     * Update the star's position and appearance
-     * @param {number} time - Current time for animation
-     * @param {Object} mouse - Mouse position {x, y} or null
-     * @param {number} maxDistance - Maximum distance for mouse interaction
+     * Update the star's position and visual properties.
+     * @param {number} time - Current timestamp for animation timing
+     * @param {Object} [mouse] - Current mouse position {x, y}
+     * @param {number} [maxDistance=150] - Maximum distance for mouse interaction
      */
     update(time, mouse, maxDistance = 150) {
         // Update blinking effect
@@ -284,8 +301,8 @@ class Star {
     }
 
     /**
-     * Draw the star on the canvas
-     * @param {CanvasRenderingContext2D} ctx - Canvas 2D context
+     * Draw the star on the canvas with glow and gradient effects.
+     * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
      */
     draw(ctx) {
         // Create radial gradient for glow effect
@@ -312,7 +329,7 @@ class Star {
     }
 
     /**
-     * Reset the star to its original position
+     * Reset the star to its original position and visual state.
      */
     reset() {
         this.x = this.originX;
@@ -322,7 +339,8 @@ class Star {
     }
 
     /**
-     * Clean up animations and resources
+     * Clean up animations and resources to prevent memory leaks.
+     * Should be called when the star is no longer needed.
      */
     dispose() {
         if (this.floatTween) this.floatTween.kill();
