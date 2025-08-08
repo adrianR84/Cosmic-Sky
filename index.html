@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Galaxy</title>
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff7e5f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000428;
+            background: linear-gradient(to bottom, #000428, #004e92);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Keep canvas below UI */
+        }
+
+        .ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem;
+            /* Remove pointer-events: none to allow interaction with controls */
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header {
+            z-index: 2;
+        }
+
+        .title {
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            font-weight: 800;
+            background: linear-gradient(90deg, #fff, #a7c7ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .controls {
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 300px;
+            /* Controls are children of .ui, so they'll inherit the higher z-index */
+            pointer-events: auto; /* Ensure controls are clickable */
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+        
+        /* Toggle Switch Styles */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .toggle-container input[type="checkbox"] {
+            display: none;
+        }
+        
+        .toggle-slider {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .toggle-slider:before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #fff;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+        
+        input[type="checkbox"]:checked + .toggle-slider {
+            background-color: var(--secondary);
+        }
+        
+        input[type="checkbox"]:checked + .toggle-slider:before {
+            transform: translateX(20px);
+            background-color: #fff;
+        }
+        
+        .toggle-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            pointer-events: auto;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .ui {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .controls {
+                margin-top: 1rem;
+                max-width: 100%;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="ui">
+        <div class="header">
+            <h1 class="title">Cosmic Galaxy</h1>
+            <p>Move your cursor to interact with the stars</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="starCount">Star Count: <span id="starCountValue">500</span></label>
+                <input type="range" id="starCount" min="100" max="2000" value="500" step="50">
+            </div>
+            <div class="control-group">
+                <label for="connectionDistance">Connection Distance: <span id="distanceValue">100</span></label>
+                <input type="range" id="connectionDistance" min="100" max="300" value="100" step="20">
+            </div>
+            <div class="control-group">
+                <label for="animationSpeed">Animation Speed: <span id="speedValue">1.0</span>x</label>
+                <input type="range" id="animationSpeed" min="0.1" max="3" value="1.0" step="0.1">
+            </div>
+
+            <div class="control-group">
+                <label for="maxStarsPerCluster">Max Stars Per Cluster: <span id="maxStarsPerClusterValue">25</span></label>
+                <input type="range" id="maxStarsPerCluster" min="5" max="50" value="25" step="1">
+            </div>
+            <div class="control-group">
+                <label for="clusterCount">Number of Clusters: <span id="clusterCountValue">5</span></label>
+                <input type="range" id="clusterCount" min="1" max="10" value="5" step="1">
+            </div>
+            <div class="control-group">
+                <label for="trailFadeSpeed">Trail Fade Speed: <span id="trailFadeSpeedValue">0.2</span></label>
+                <input type="range" id="trailFadeSpeed" min="0.01" max="0.3" value="0.05" step="0.01">
+            </div>
+
+            <div class="control-group" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <label class="toggle-container">
+                    <input type="checkbox" id="ellipseMovement">
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-label">Star Movement</span>
+                </label>
+            </div>
+            <div class="control-group" id="starMovementSpeedContainer" style="display: none;">
+                <label for="starMovementSpeed">Star Movement Speed: <span id="starMovementSpeedValue">1.5</span>x</label>
+                <input type="range" id="starMovementSpeed" min="0.0" max="1.0" value="0.2" step="0.05">
+            </div>
+
+            <div class="control-group">
+                <label for="bgColor">Background Color: <span id="bgColorValue">#000428</span></label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                    <input type="color" id="bgColor" value="#000428" style="width: 50px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
+                    <input type="range" id="bgOpacity" min="0" max="100" value="100" style="flex: 1;">
+                    <span id="opacityValue" style="font-size: 0.8em; min-width: 30px; text-align: right;">100%</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    
+    <div class="stats">
+        <span id="fps">0</span> FPS | 
+        <span id="stars">0</span> Stars | 
+        <span id="connections">0</span> Connections
+    </div>
+
+    <!-- GSAP for smooth animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Main app scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/star.js"></script>
+    <script src="js/starfield.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
