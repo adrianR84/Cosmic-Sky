@@ -76,6 +76,11 @@ class Star {
         this.targetSize = this.size;
         this.pulseSpeed = Utils.randomInRange(0.003, 0.015); // More varied pulsing
         this.pulseAmount = 0.15; // Base pulse amount
+        
+        // Parallax effect properties
+        this.parallaxDepth = 0.5 + Math.random() * 0.5; // Depth between 0.5 and 1.0
+        this.parallaxX = 0;
+        this.parallaxY = 0;
 
         // Blinking effect properties
         this.isBlinking = false;
@@ -192,10 +197,19 @@ class Star {
     /**
      * Update the star's position and visual properties.
      * @param {number} time - Current timestamp for animation timing
-     * @param {Object} [mouse] - Current mouse position {x, y}
+     * @param {Object} [mouse] - Current mouse position {x, y, normX, normY}
      * @param {number} [maxDistance=150] - Maximum distance for mouse interaction
      */
     update(time, mouse, maxDistance = 150) {
+        // Check if we should reset parallax (when mouse leaves or effect is disabled)
+        if (!mouse || !mouse.normX || !mouse.normY) {
+            // Smoothly return to original position when mouse leaves
+            this.parallaxX *= 0.9;
+            this.parallaxY *= 0.9;
+            if (Math.abs(this.parallaxX) < 0.1) this.parallaxX = 0;
+            if (Math.abs(this.parallaxY) < 0.1) this.parallaxY = 0;
+        }
+        // Note: Parallax positions are now handled by Starfield.updateParallaxPositions()
         // Update blinking effect
         this.updateBlinkingEffect(time);
 
@@ -296,34 +310,37 @@ class Star {
             }
         }
 
-        // Smooth size transition
-        this.currentSize += (this.targetSize - this.currentSize) * this.pulseSpeed;
     }
 
     /**
-     * Draw the star on the canvas with glow and gradient effects.
-     * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas
+     * Draw the star on the canvas.
+     * @param {CanvasRenderingContext2D} ctx - The canvas 2D rendering context
      */
     draw(ctx) {
-        // Create radial gradient for glow effect
+        if (!ctx) return;
+        
+        // Create gradient for the star
         const gradient = ctx.createRadialGradient(
             this.x, this.y, 0,
-            this.x, this.y, this.currentSize * 2
+            this.x, this.y, this.currentSize * 1.5
         );
-
-        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha})`);
+        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha})`);
         gradient.addColorStop(0.7, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha * 0.5})`);
         gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
 
+        // Apply parallax offset to position
+        const drawX = this.x + (this.parallaxX || 0);
+        const drawY = this.y + (this.parallaxY || 0);
+
         // Draw the star
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.currentSize, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY, this.currentSize, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
 
         // Add a small bright center
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.currentSize * 0.3, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY, this.currentSize * 0.3, 0, Math.PI * 2);
         ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, 95%, 0.8)`;
         ctx.fill();
     }

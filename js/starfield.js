@@ -42,11 +42,22 @@ class Starfield {
 
         // State
         this.stars = [];
-        this.mouse = null;
+        this.mouse = { x: 0, y: 0 };
         this.animationId = null;
         this.lastTime = 0;
         this.fps = 0;
         this.visibleConnections = 0;
+        
+        // Parallax configuration with defaults
+        this.parallaxConfig = {
+            enabled: true,
+            intensity: 0.2,
+            maxOffset: 100, // Max movement in pixels
+            ...options.parallax
+        };
+        
+        this.centerX = this.canvas.width / 2;
+        this.centerY = this.canvas.height / 2;
 
         // Initialize
         this.init();
@@ -75,6 +86,14 @@ class Starfield {
     }
 
     /**
+     * Set the maximum distance for connecting stars
+     * @param {number} distance - The maximum connection distance in pixels
+     */
+    setConnectionDistance(distance) {
+        this.options.connectionDistance = Math.max(0, distance);
+    }
+
+    /**
      * Enable or disable elliptical movement for stars
      * @param {boolean} enabled - Whether elliptical movement is enabled globally
      */
@@ -98,6 +117,32 @@ class Starfield {
             // Update the star's ellipseEnabled state
             star.ellipseEnabled = shouldBeEnabled;
         });
+    }
+
+    /**
+     * Set the global animation speed multiplier
+     * @param {number} speed - Speed multiplier (0.0 to 5.0)
+     */
+    setAnimationSpeed(speed) {
+        // Clamp speed between 0 and 5
+        const clampedSpeed = Math.max(0, Math.min(speed, 5));
+        this.animationSpeed = clampedSpeed;
+        
+        // Update any time-based animations
+        this.stars.forEach(star => {
+            if (star.animation && star.animation.timeScale) {
+                star.animation.timeScale(clampedSpeed);
+            }
+        });
+    }
+    
+    /**
+     * Set the trail fade speed (how quickly trails disappear)
+     * @param {number} speed - Fade speed (0.0 to 1.0, where 1.0 is instant)
+     */
+    setTrailFadeSpeed(speed) {
+        // Clamp speed between 0.01 and 1.0
+        this.options.trailFadeSpeed = Math.max(0.01, Math.min(speed, 1.0));
     }
 
     /**
@@ -263,30 +308,63 @@ class Starfield {
      * @returns {void}
      */
     setupEventListeners() {
-        // Mouse movement
-        this.canvas.addEventListener('mousemove', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            this.mouse = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        });
+        // Update center points
+        this.centerX = this.canvas.width / 2;
+        this.centerY = this.canvas.height / 2;
 
+        // Mouse movement with throttling for better performance
+        let lastMove = 0;
+        const throttleDelay = 16; // ~60fps
+        
+        const handleMouseMove = (e) => {
+            const now = performance.now();
+            if (now - lastMove < throttleDelay) return;
+            lastMove = now;
+            
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate normalized mouse position (-1 to 1)
+            this.mouse = {
+                x: x,
+                y: y,
+                normX: (x / this.canvas.width - 0.5) * 2,
+                normY: (y / this.canvas.height - 0.5) * 2
+            };
+            
+            // Parallax positions will be updated in the next animation frame
+        };
+
+        // Mouse move
+        this.canvas.addEventListener('mousemove', handleMouseMove);
+        
         // Touch support
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            const rect = this.canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            this.mouse = {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
-            };
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                handleMouseMove(mouseEvent);
+            }
         }, { passive: false });
 
-        // Mouse leave
-        this.canvas.addEventListener('mouseleave', () => {
+        // Mouse/touch leave
+        const handleLeave = () => {
+            // Smoothly return stars to original position
+            this.stars.forEach(star => {
+                star.parallaxX = 0;
+                star.parallaxY = 0;
+            });
             this.mouse = null;
-        });
+        };
+        
+        this.canvas.addEventListener('mouseleave', handleLeave);
+        this.canvas.addEventListener('touchend', handleLeave);
+        this.canvas.addEventListener('touchcancel', handleLeave);
 
         // Window resize
         window.addEventListener('resize', () => {
@@ -394,6 +472,67 @@ class Starfield {
 
 
     /**
+     * Update parallax positions based on mouse movement
+     * @private
+     * @returns {void}
+     */
+    updateParallaxPositions() {
+        if (!this.mouse || !this.parallaxConfig.enabled) {
+            // Reset parallax positions when disabled
+            this.stars.forEach(star => {
+                star.parallaxX = 0;
+                star.parallaxY = 0;
+            });
+            return;
+        }
+        
+        // Calculate base movement based on mouse position and intensity
+        const baseX = this.mouse.normX * this.parallaxConfig.intensity * this.parallaxConfig.maxOffset;
+        const baseY = this.mouse.normY * this.parallaxConfig.intensity * this.parallaxConfig.maxOffset;
+        
+        // Update each star's parallax position based on its depth
+        this.stars.forEach(star => {
+            // Deeper stars move less (multiply by depth)
+            star.parallaxX = baseX * star.parallaxDepth;
+            star.parallaxY = baseY * star.parallaxDepth;
+        });
+    }
+    
+    /**
+     * Set parallax effect configuration
+     * @param {Object} config - Parallax configuration
+     * @param {boolean} [config.enabled] - Whether parallax effect is enabled
+     * @param {number} [config.intensity] - Intensity of the parallax effect (0-1)
+     * @param {number} [config.maxOffset] - Maximum movement in pixels
+     */
+    setParallaxConfig(config) {
+        if (config.enabled !== undefined) {
+            this.parallaxConfig.enabled = config.enabled;
+        }
+        if (config.intensity !== undefined) {
+            this.parallaxConfig.intensity = Math.max(0, Math.min(1, config.intensity));
+        }
+        if (config.maxOffset !== undefined) {
+            this.parallaxConfig.maxOffset = Math.max(0, config.maxOffset);
+        }
+    }
+    
+    /**
+     * Enable or disable the parallax effect
+     * @param {boolean} enabled - Whether to enable the parallax effect
+     */
+    setParallaxEnabled(enabled) {
+        this.parallaxConfig.enabled = enabled;
+        if (!enabled) {
+            // Reset parallax positions when disabling
+            this.stars.forEach(star => {
+                star.parallaxX = 0;
+                star.parallaxY = 0;
+            });
+        }
+    }
+    
+    /**
      * Update all stars' positions and states based on the current time.
      * @param {number} time - Current timestamp in milliseconds
      * @param {number} deltaTime - Time since last frame in milliseconds
@@ -491,6 +630,9 @@ class Starfield {
         this.ctx.fillStyle = `rgba(${this._bgColor.r}, ${this._bgColor.g}, ${this._bgColor.b}, ${opacity})`;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Update parallax positions based on mouse movement
+        this.updateParallaxPositions();
+        
         // Update and draw stars
         this.updateStars(time, deltaTime);
 

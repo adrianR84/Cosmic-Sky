@@ -47,6 +47,11 @@ const DEFAULT_CONFIG = {
     ellipseMovement: false,
     bgColor: '#000428',
     bgOpacity: 1.0,
+    parallax: {
+        enabled: true,
+        intensity: 0.2,
+        maxOffset: 100
+    },
     colors: {
         starHueMin: 200,
         starHueMax: 300,
@@ -138,7 +143,7 @@ function applyConfig(config) {
  * @listens DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if the browser supports required features
+    // Check if browser supports required features
     if (!isCanvasSupported()) {
         showUnsupportedMessage();
         return;
@@ -157,8 +162,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the starfield with the current config
     init();
 
-    // Initialize UI controls after the starfield is ready
+    // Set up UI controls after the starfield is ready
     initUIControls();
+
+    // Initialize parallax controls state
+    updateParallaxUI();
+
+    // Make controls draggable
+    initDraggableControls();
+
+    // Set up window resize handler
+    window.addEventListener('resize', handleResize);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // Pause animation when page is hidden
+            if (starfield) starfield.pause();
+        } else {
+            // Resume animation when page is visible
+            if (starfield) starfield.resume();
+        }
+    });
 
     // Apply any starfield-specific settings
     if (starfield) {
@@ -169,13 +194,16 @@ document.addEventListener('DOMContentLoaded', () => {
         starfield.setAnimationSpeed(CONFIG.animationSpeed);
         starfield.setStarMovementSpeed(CONFIG.starMovementSpeed);
         starfield.setTrailFadeSpeed(CONFIG.trailFadeSpeed);
+
+        // Apply parallax settings
+        if (CONFIG.parallax) {
+            starfield.setParallaxConfig({
+                enabled: CONFIG.parallax.enabled,
+                intensity: CONFIG.parallax.intensity,
+                maxOffset: CONFIG.parallax.maxOffset
+            });
+        }
     }
-
-    // Handle window resize events with debouncing
-    window.addEventListener('resize', handleResize);
-
-    // Make controls panel draggable
-    initDraggableControls();
 });
 
 /**
@@ -282,6 +310,33 @@ function handleResize() {
  * Synchronizes form controls with the current state of the visualization.
  * @returns {void}
  */
+function updateParallaxUI() {
+    if (!CONFIG.parallax) return;
+
+    const enabledCheckbox = document.getElementById('parallaxEnabled');
+    const intensitySlider = document.getElementById('parallaxIntensity');
+    const maxOffsetSlider = document.getElementById('parallaxMaxOffset');
+
+    if (enabledCheckbox) enabledCheckbox.checked = CONFIG.parallax.enabled;
+    if (intensitySlider) intensitySlider.value = CONFIG.parallax.intensity;
+    if (maxOffsetSlider) maxOffsetSlider.value = CONFIG.parallax.maxOffset;
+
+    // Update displayed values
+    const intensityValue = document.getElementById('parallaxIntensityValue');
+    const maxOffsetValue = document.getElementById('parallaxMaxOffsetValue');
+
+    if (intensityValue) intensityValue.textContent = CONFIG.parallax.intensity.toFixed(2);
+    if (maxOffsetValue) maxOffsetValue.textContent = CONFIG.parallax.maxOffset;
+
+    // Toggle controls based on enabled state
+    const parallaxControls = document.getElementById('parallaxControls');
+    if (parallaxControls) {
+        parallaxControls.style.display = CONFIG.parallax.enabled ? 'block' : 'none';
+        // Add smooth transition
+        parallaxControls.style.transition = 'opacity 0.3s ease, display 0.3s ease';
+    }
+}
+
 function updateUI() {
     // Update star count display
     const starCountEl = document.getElementById('starCount');
@@ -412,6 +467,8 @@ function initUIControls() {
     const speedInput = document.getElementById('animationSpeed');
     const starMovementSpeedInput = document.getElementById('starMovementSpeed');
     const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
+
+    // Parallax controls (declared later where used)
     const clusterCountInput = document.getElementById('clusterCount');
     const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
     const ellipseToggle = document.getElementById('ellipseMovement');
@@ -548,11 +605,10 @@ function initUIControls() {
 
     if (speedInput) {
         speedInput.addEventListener('input', (e) => {
-            CONFIG.animationSpeed = parseFloat(e.target.value);
-            document.getElementById('speedValue').textContent = CONFIG.animationSpeed.toFixed(1) + 'x';
-            if (starfield) {
-                starfield.setAnimationSpeed(CONFIG.animationSpeed);
-            }
+            const newSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = newSpeed.toFixed(1);
+            CONFIG.animationSpeed = newSpeed;
+            if (starfield) starfield.setAnimationSpeed(newSpeed);
             saveConfig();
         });
     }
@@ -606,6 +662,74 @@ function initUIControls() {
                 starfield.setStarMovementSpeed(speed);
                 saveConfig();
             }
+        });
+    }
+
+    // Parallax controls event listeners
+    const parallaxEnabledInput = document.getElementById('parallaxEnabled');
+    const parallaxIntensityInput = document.getElementById('parallaxIntensity');
+    const parallaxMaxOffsetInput = document.getElementById('parallaxMaxOffset');
+
+    if (parallaxEnabledInput) {
+        // Set initial state
+        if (CONFIG.parallax) {
+            parallaxEnabledInput.checked = CONFIG.parallax.enabled !== false; // Default to true if not set
+        }
+
+        parallaxEnabledInput.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            if (!CONFIG.parallax) CONFIG.parallax = {};
+            CONFIG.parallax.enabled = enabled;
+
+            if (starfield) {
+                starfield.setParallaxEnabled(enabled);
+            }
+
+            // Update UI to show/hide parallax controls based on enabled state
+            updateParallaxUI();
+            saveConfig();
+        });
+    }
+
+    if (parallaxIntensityInput) {
+        // Set initial value
+        if (CONFIG.parallax && CONFIG.parallax.intensity !== undefined) {
+            parallaxIntensityInput.value = CONFIG.parallax.intensity;
+            document.getElementById('parallaxIntensityValue').textContent = CONFIG.parallax.intensity.toFixed(2);
+        }
+
+        parallaxIntensityInput.addEventListener('input', (e) => {
+            const intensity = parseFloat(e.target.value);
+            if (!CONFIG.parallax) CONFIG.parallax = {};
+            CONFIG.parallax.intensity = intensity;
+
+            if (starfield) {
+                starfield.setParallaxConfig({ intensity });
+            }
+
+            document.getElementById('parallaxIntensityValue').textContent = intensity.toFixed(2);
+            saveConfig();
+        });
+    }
+
+    if (parallaxMaxOffsetInput) {
+        // Set initial value
+        if (CONFIG.parallax && CONFIG.parallax.maxOffset !== undefined) {
+            parallaxMaxOffsetInput.value = CONFIG.parallax.maxOffset;
+            document.getElementById('parallaxMaxOffsetValue').textContent = CONFIG.parallax.maxOffset;
+        }
+
+        parallaxMaxOffsetInput.addEventListener('input', (e) => {
+            const maxOffset = parseInt(e.target.value);
+            if (!CONFIG.parallax) CONFIG.parallax = {};
+            CONFIG.parallax.maxOffset = maxOffset;
+
+            if (starfield) {
+                starfield.setParallaxConfig({ maxOffset });
+            }
+
+            document.getElementById('parallaxMaxOffsetValue').textContent = maxOffset;
+            saveConfig();
         });
     }
 }
