@@ -47,7 +47,10 @@ class Starfield {
         this.lastTime = 0;
         this.fps = 0;
         this.visibleConnections = 0;
-        
+        this.mouseConnectionsEnabled = this.options.mouseConnectionsEnabled !== undefined
+            ? this.options.mouseConnectionsEnabled
+            : true; // Default to true if not specified
+
         // Parallax configuration with defaults
         this.parallaxConfig = {
             enabled: true,
@@ -55,7 +58,7 @@ class Starfield {
             maxOffset: 100, // Max movement in pixels
             ...options.parallax
         };
-        
+
         this.centerX = this.canvas.width / 2;
         this.centerY = this.canvas.height / 2;
 
@@ -127,7 +130,7 @@ class Starfield {
         // Clamp speed between 0 and 5
         const clampedSpeed = Math.max(0, Math.min(speed, 5));
         this.animationSpeed = clampedSpeed;
-        
+
         // Update any time-based animations
         this.stars.forEach(star => {
             if (star.animation && star.animation.timeScale) {
@@ -135,7 +138,7 @@ class Starfield {
             }
         });
     }
-    
+
     /**
      * Set the trail fade speed (how quickly trails disappear)
      * @param {number} speed - Fade speed (0.0 to 1.0, where 1.0 is instant)
@@ -143,6 +146,14 @@ class Starfield {
     setTrailFadeSpeed(speed) {
         // Clamp speed between 0.01 and 1.0
         this.options.trailFadeSpeed = Math.max(0.01, Math.min(speed, 1.0));
+    }
+
+    /**
+     * Enable or disable mouse connections to nearby stars
+     * @param {boolean} enabled - Whether mouse connections are enabled
+     */
+    setMouseConnectionsEnabled(enabled) {
+        this.mouseConnectionsEnabled = enabled;
     }
 
     /**
@@ -199,7 +210,7 @@ class Starfield {
                     size: Utils.randomInRange(0.5, 2.5),
                     zIndex: Math.random(),
                     speed: Utils.randomInRange(0.05, 0.2) * movementSpeed, // Configurable movement speed
-                    connectToMouse: true,
+                    moveStarsAwayFromMouse: this.options.moveStarsAwayFromMouse !== undefined ? this.options.moveStarsAwayFromMouse : false,
                     amplitude: Utils.randomInRange(2, 10) * movementSpeed, // Configurable amplitude
                     frequency: Utils.randomInRange(0.0003, 0.001) * movementSpeed, // Configurable frequency
                     ellipseEnabled: this.options.ellipseEnabled, // Use global setting
@@ -242,7 +253,7 @@ class Starfield {
 
         // Create clustered or distributed stars based on clusterEnabled flag
         let remainingStars = starCount;
-        
+
         if (this.options.clusterEnabled !== false) {
             // Only create clusters if clustering is enabled
             const clusteredStars = Math.floor(starCount * 0.2);
@@ -281,7 +292,7 @@ class Starfield {
                 size: Utils.randomInRange(0.3, 2.0), // Smaller range for distributed stars
                 zIndex: Math.random(),
                 speed: Utils.randomInRange(0.02, 0.15) * starMovementSpeed, // Configurable movement speed
-                connectToMouse: true,
+                moveStarsAwayFromMouse: this.options.moveStarsAwayFromMouse !== undefined ? this.options.moveStarsAwayFromMouse : false,
                 amplitude: Utils.randomInRange(1, 6) * starMovementSpeed, // Configurable amplitude
                 frequency: Utils.randomInRange(0.0001, 0.0008) * starMovementSpeed, // Configurable frequency
                 ellipticalMovementRate: this.options.ellipticalMovementRate, // Pass the elliptical movement rate
@@ -318,16 +329,16 @@ class Starfield {
         // Mouse movement with throttling for better performance
         let lastMove = 0;
         const throttleDelay = 16; // ~60fps
-        
+
         const handleMouseMove = (e) => {
             const now = performance.now();
             if (now - lastMove < throttleDelay) return;
             lastMove = now;
-            
+
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
+
             // Calculate normalized mouse position (-1 to 1)
             this.mouse = {
                 x: x,
@@ -335,13 +346,13 @@ class Starfield {
                 normX: (x / this.canvas.width - 0.5) * 2,
                 normY: (y / this.canvas.height - 0.5) * 2
             };
-            
+
             // Parallax positions will be updated in the next animation frame
         };
 
         // Mouse move
         this.canvas.addEventListener('mousemove', handleMouseMove);
-        
+
         // Touch support
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
@@ -364,7 +375,7 @@ class Starfield {
             });
             this.mouse = null;
         };
-        
+
         this.canvas.addEventListener('mouseleave', handleLeave);
         this.canvas.addEventListener('touchend', handleLeave);
         this.canvas.addEventListener('touchcancel', handleLeave);
@@ -488,11 +499,11 @@ class Starfield {
             });
             return;
         }
-        
+
         // Calculate base movement based on mouse position and intensity
         const baseX = this.mouse.normX * this.parallaxConfig.intensity * this.parallaxConfig.maxOffset;
         const baseY = this.mouse.normY * this.parallaxConfig.intensity * this.parallaxConfig.maxOffset;
-        
+
         // Update each star's parallax position based on its depth
         this.stars.forEach(star => {
             // Deeper stars move less (multiply by depth)
@@ -500,7 +511,7 @@ class Starfield {
             star.parallaxY = baseY * star.parallaxDepth;
         });
     }
-    
+
     /**
      * Set parallax effect configuration
      * @param {Object} config - Parallax configuration
@@ -519,7 +530,7 @@ class Starfield {
             this.parallaxConfig.maxOffset = Math.max(0, config.maxOffset);
         }
     }
-    
+
     /**
      * Enable or disable the parallax effect
      * @param {boolean} enabled - Whether to enable the parallax effect
@@ -534,7 +545,7 @@ class Starfield {
             });
         }
     }
-    
+
     /**
      * Update all stars' positions and states based on the current time.
      * @param {number} time - Current timestamp in milliseconds
@@ -635,12 +646,14 @@ class Starfield {
 
         // Update parallax positions based on mouse movement
         this.updateParallaxPositions();
-        
+
         // Update and draw stars
         this.updateStars(time, deltaTime);
 
-        // Draw connections
-        this.drawConnections();
+        // Draw connections if enabled
+        if (this.mouseConnectionsEnabled) {
+            this.drawConnections();
+        }
 
         // Draw stars (on top of connections)
         this.drawStars();
@@ -666,49 +679,99 @@ class Starfield {
     }
 
     /**
-     * Draw connections between stars that are within the connection distance.
+     * Draw connections between nearby stars and mouse
      * @private
      * @returns {void}
      */
     drawConnections() {
-        const { connectionDistance, connectionOpacity } = this.options;
-        const { width, height } = this.canvas;
-        const ctx = this.ctx;
+        if (this.options.connectionDistance > 0 && this.mouseConnectionsEnabled) {
+            const { connectionDistance, connectionOpacity } = this.options;
+            const { width, height } = this.canvas;
+            const ctx = this.ctx;
 
-        // Only draw connections if mouse is present
-        if (!this.mouse) return;
-
-        ctx.save();
-
-        // Draw connections to mouse
-        this.stars.forEach(star => {
-            const dist = Utils.distance(star.x, star.y, this.mouse.x, this.mouse.y);
-
-            if (dist < connectionDistance) {
-                const opacity = (1 - dist / connectionDistance) * connectionOpacity;
-
-                // Create gradient for connection line
-                const gradient = ctx.createLinearGradient(
-                    star.x, star.y,
-                    this.mouse.x, this.mouse.y
-                );
-
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
-                gradient.addColorStop(1, `rgba(100, 149, 237, ${opacity * 0.5})`);
-
-                // Draw connection line
-                ctx.beginPath();
-                ctx.moveTo(star.x, star.y);
-                ctx.lineTo(this.mouse.x, this.mouse.y);
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-
-                this.visibleConnections++;
+            // Only draw connections if mouse is present
+            if (!this.mouse) {
+                return;
             }
-        });
 
-        ctx.restore();
+            ctx.save();
+
+            // Reset visible connections counter
+            this.visibleConnections = 0;
+
+            // Draw connections to mouse
+            this.stars.forEach(star => {
+                const dist = Utils.distance(star.x, star.y, this.mouse.x, this.mouse.y);
+
+                if (dist < connectionDistance) {
+                    const opacity = (1 - dist / connectionDistance) * connectionOpacity;
+
+                    // Create gradient for connection line using configured colors
+                    const gradient = ctx.createLinearGradient(
+                        star.x, star.y,
+                        this.mouse.x, this.mouse.y
+                    );
+
+                    console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
+
+                    // Use configured connection colors with opacity applied
+                    const startColor = this.options.connectionColor.start || 'rgba(212, 14, 14, 0.8)';
+                    const endColor = this.options.connectionColor.end || 'rgba(4, 49, 11, 0.4)';
+
+                    console.log(startColor, endColor);
+
+                    // Apply opacity to the colors
+                    const startColorWithOpacity = this._applyOpacityToColor(startColor, opacity);
+                    const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 0.5);
+
+                    console.log(startColorWithOpacity, endColorWithOpacity);
+
+                    gradient.addColorStop(0, startColorWithOpacity);
+                    gradient.addColorStop(1, endColorWithOpacity);
+
+                    // Draw connection line
+                    ctx.beginPath();
+                    ctx.moveTo(star.x, star.y);
+                    ctx.lineTo(this.mouse.x, this.mouse.y);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+
+                    this.visibleConnections++;
+                }
+            });
+
+            ctx.restore();
+        }
+    }
+
+    /**
+     * Apply opacity to a CSS color string
+     * @param {string} color - CSS color string (hex, rgb, or rgba)
+     * @param {number} opacity - Opacity value (0-1)
+     * @returns {string} Color string with applied opacity
+     * @private
+     */
+    _applyOpacityToColor(color, opacity) {
+        // If the color is already rgba, update the alpha channel
+        if (color.startsWith('rgba')) {
+            return color.replace(/[\d.]+(?=\s*\)$)/, opacity);
+        }
+        // If the color is rgb, convert to rgba with the new opacity
+        else if (color.startsWith('rgb')) {
+            return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+        }
+        // If it's a hex color, convert to rgba
+        else if (color.startsWith('#')) {
+            // Convert hex to RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        // Return as is if format is not recognized
+        return color;
     }
 
     /**
@@ -732,20 +795,15 @@ class Starfield {
      * @returns {void}
      */
     dispose() {
-        // Cancel animation frame
+        // Clean up event listeners
+        window.removeEventListener('resize', this._handleResize);
+        this.canvas.removeEventListener('mousemove', this._handleMouseMove);
+        this.canvas.removeEventListener('mouseleave', this._handleLeave);
+
+        // Stop the animation loop
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
-
-        // Clean up stars
-        this.stars.forEach(star => star.dispose());
-        this.stars = [];
-
-        // Remove event listeners
-        const events = ['mousemove', 'touchmove', 'mouseleave', 'resize'];
-        events.forEach(event => {
-            window.removeEventListener(event, this[`on${event}`]);
-        });
     }
 }

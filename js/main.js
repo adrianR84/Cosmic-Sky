@@ -39,6 +39,8 @@ let isInitialized = false;
 const DEFAULT_CONFIG = {
     starCount: 1000,
     connectionDistance: 250,
+    mouseConnectionsEnabled: true,
+    moveStarsAwayFromMouse: false,
     animationSpeed: 1.0,
     starMovementSpeed: 0.2,
     maxStarsPerCluster: 100,
@@ -58,8 +60,8 @@ const DEFAULT_CONFIG = {
         starHueMax: 300,
         starSaturation: 80,
         starLightness: 80,
-        connectionStart: 'rgba(255, 255, 255, 0.8)',
-        connectionEnd: 'rgba(100, 149, 237, 0.4)'
+        connectionStart: 'rgba(3, 28, 39, 0.8)',
+        connectionEnd: 'rgba(146, 29, 8, 0.4)'
     }
 };
 
@@ -220,6 +222,8 @@ function init() {
         const starfieldOptions = {
             starCount: CONFIG.starCount,
             connectionDistance: CONFIG.connectionDistance,
+            mouseConnectionsEnabled: CONFIG.mouseConnectionsEnabled !== undefined ? CONFIG.mouseConnectionsEnabled : true,
+            moveStarsAwayFromMouse: CONFIG.moveStarsAwayFromMouse !== undefined ? CONFIG.moveStarsAwayFromMouse : false,
             starColor: {
                 hue: Utils.randomInRange(CONFIG.colors.starHueMin, CONFIG.colors.starHueMax),
                 saturation: CONFIG.colors.starSaturation,
@@ -399,6 +403,10 @@ function initUIControls() {
     const bgColorValue = document.getElementById('bgColorValue');
     const opacityValue = document.getElementById('opacityValue');
 
+    // Mouse connections controls
+    const mouseConnectionsToggle = document.getElementById('enableMouseConnections');
+    const connectionControls = document.getElementById('connectionControls');
+
     // Ellipse movement controls
     const ellipseToggle = document.getElementById('ellipseMovement');
     const ellipseControls = document.getElementById('ellipseControls');
@@ -406,6 +414,13 @@ function initUIControls() {
     const starMovementSpeedInput = document.getElementById('starMovementSpeed');
 
     // Set initial values from CONFIG and update displays
+    if (mouseConnectionsToggle) {
+        mouseConnectionsToggle.checked = CONFIG.mouseConnectionsEnabled;
+        if (connectionControls) {
+            connectionControls.style.display = CONFIG.mouseConnectionsEnabled ? 'block' : 'none';
+        }
+    }
+
     if (starCountInput) {
         starCountInput.value = CONFIG.starCount;
         document.getElementById('starCountValue').textContent = CONFIG.starCount;
@@ -461,6 +476,20 @@ function initUIControls() {
         const opacityPercent = Math.round((CONFIG.bgOpacity || 1) * 100);
         bgOpacitySlider.value = opacityPercent;
         if (opacityValue) opacityValue.textContent = `${opacityPercent}%`;
+    }
+
+    // Add mouse connections toggle event listener
+    if (mouseConnectionsToggle) {
+        mouseConnectionsToggle.addEventListener('change', (e) => {
+            CONFIG.mouseConnectionsEnabled = e.target.checked;
+            if (connectionControls) {
+                connectionControls.style.display = CONFIG.mouseConnectionsEnabled ? 'block' : 'none';
+            }
+            if (starfield) {
+                starfield.setMouseConnectionsEnabled(CONFIG.mouseConnectionsEnabled);
+            }
+            saveConfig();
+        });
     }
 
     // Add event listeners
@@ -531,22 +560,22 @@ function initUIControls() {
             const displayValue = ((CONFIG.ellipticalMovementRate || 0.1) * 100).toFixed(0);
             ellipticalMovementRateInput.value = CONFIG.ellipticalMovementRate || 0.1;
             document.getElementById('ellipticalMovementRateValue').textContent = displayValue;
-            
+
             ellipticalMovementRateInput.addEventListener('input', (e) => {
                 // Store the actual 0-1 value in the config
                 const value = parseFloat(e.target.value);
                 CONFIG.ellipticalMovementRate = value;
-                
+
                 // Display as percentage (0-100)
                 const displayValue = (value * 100).toFixed(0);
                 document.getElementById('ellipticalMovementRateValue').textContent = displayValue;
-                
+
                 if (starfield) {
                     starfield.options.ellipticalMovementRate = value;
                     // Recreate stars to apply the new movement rate
                     starfield.createStars();
                 }
-                
+
                 saveConfig();
             });
         }

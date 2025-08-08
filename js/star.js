@@ -11,7 +11,7 @@ class Star {
      * @param {number} [options.size=random(0.5,3)] - Base size of the star in pixels
      * @param {number} [options.zIndex=Math.random()] - Z-index for depth sorting (0-1)
      * @param {number} [options.speed=1] - Animation speed multiplier
-     * @param {boolean} [options.connectToMouse=true] - Whether the star reacts to mouse proximity
+     * @param {boolean} [options.moveStarsAwayFromMouse=false] - Whether the star moves away from mouse cursor
      * @param {boolean} [options.ellipseEnabled=false] - Whether elliptical movement is enabled
      * @param {number} [options.ellipticalMovementRate=0.1] - Probability (0-1) of elliptical movement
      * @param {number} [options.ellipseRadiusX=random(50,150)] - Horizontal radius of elliptical path
@@ -31,7 +31,7 @@ class Star {
         this.size = options.size || Utils.randomInRange(0.5, 3);
         this.zIndex = options.zIndex || Math.random();
         this.speed = options.speed || 1;
-        this.connectToMouse = options.connectToMouse !== false;
+        this.moveStarsAwayFromMouse = options.moveStarsAwayFromMouse || false;
 
         // Visual properties
         this.hue = Utils.randomInRange(0, 60) + 180; // Blues and purples
@@ -291,7 +291,7 @@ class Star {
         this.y = this.originY + yOffset;
 
         // React to mouse proximity (more subtle)
-        if (mouse && this.connectToMouse) {
+        if (mouse && this.moveStarsAwayFromMouse) {
             const distance = Utils.distance(this.x, this.y, mouse.x, mouse.y);
             const proximity = 1 - Math.min(distance / maxDistance, 1);
 
