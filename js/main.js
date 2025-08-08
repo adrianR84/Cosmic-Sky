@@ -41,7 +41,7 @@ const DEFAULT_CONFIG = {
     connectionDistance: 250,
     animationSpeed: 1.0,
     starMovementSpeed: 0.2,
-    maxStarsPerCluster: 25,
+    maxStarsPerCluster: 100,
     clusterCount: 5,
     trailFadeSpeed: 0.2,
     ellipseMovement: false,
@@ -93,49 +93,7 @@ function loadConfig() {
     return null;
 }
 
-/**
- * Apply configuration to the UI and starfield.
- * This is called when the user changes settings in the UI.
- * @param {Object} config - The configuration to apply
- * @returns {void}
- */
-function applyConfig(config) {
-    if (!config) return;
 
-    // Update CONFIG with new values
-    CONFIG = { ...CONFIG, ...config };
-
-    // Save the updated configuration
-    saveConfig();
-
-    // Update UI elements
-    updateUI();
-
-    // Apply to starfield if it exists
-    if (starfield) {
-        if (config.ellipseMovement !== undefined) {
-            starfield.setEllipseMovement(config.ellipseMovement);
-        }
-        if (config.bgColor !== undefined) {
-            starfield.setBackgroundColor(config.bgColor);
-        }
-        if (config.bgOpacity !== undefined) {
-            starfield.setBackgroundOpacity(config.bgOpacity);
-        }
-        if (config.connectionDistance !== undefined) {
-            starfield.setConnectionDistance(config.connectionDistance);
-        }
-        if (config.animationSpeed !== undefined) {
-            starfield.setAnimationSpeed(config.animationSpeed);
-        }
-        if (config.starMovementSpeed !== undefined) {
-            starfield.setStarMovementSpeed(config.starMovementSpeed);
-        }
-        if (config.trailFadeSpeed !== undefined) {
-            starfield.setTrailFadeSpeed(config.trailFadeSpeed);
-        }
-    }
-}
 
 /**
  * Initialize the application when the DOM is fully loaded.
@@ -272,7 +230,8 @@ function init() {
             },
             backgroundColor: 'transparent',
             trailFadeSpeed: CONFIG.trailFadeSpeed,
-            ellipseMovement: false // Default to original movement
+            ellipseMovement: false, // Default to original movement
+            clusterEnabled: CONFIG.clusterEnabled !== undefined ? CONFIG.clusterEnabled : true, // Respect cluster toggle, default to true
         };
 
         // Create the starfield with configuration
@@ -419,43 +378,6 @@ function updateUI() {
 }
 
 /**
- * Display an error message to the user.
- * @param {string} message - The error message to display
- * @returns {void}
- */
-function showError(message) {
-    const errorEl = document.createElement('div');
-    errorEl.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(255, 50, 50, 0.9);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 4px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        font-family: Arial, sans-serif;
-        max-width: 80%;
-        text-align: center;
-    `;
-    errorEl.textContent = message;
-
-    document.body.appendChild(errorEl);
-
-    // Remove the error message after 5 seconds
-    setTimeout(() => {
-        errorEl.style.opacity = '0';
-        setTimeout(() => {
-            if (errorEl.parentNode) {
-                errorEl.parentNode.removeChild(errorEl);
-            }
-        }, 300);
-    }, 5000);
-}
-
-/**
  * Initialize all UI controls and set up event listeners.
  * Handles user interactions with the control panel.
  * @returns {void}
@@ -587,6 +509,33 @@ function initUIControls() {
             if (starfield) {
                 starfield.setEllipseMovement(isChecked);
             }
+            saveConfig();
+        });
+    }
+
+    // Cluster controls toggle
+    const enableClustersToggle = document.getElementById('enableClusters');
+    const clusterControls = document.getElementById('clusterControls');
+
+    if (enableClustersToggle && clusterControls) {
+        // Set initial state from config (default to true if not set)
+        enableClustersToggle.checked = CONFIG.clusterEnabled !== false;
+        clusterControls.style.display = enableClustersToggle.checked ? 'block' : 'none';
+
+        // Add event listener for toggle
+        enableClustersToggle.addEventListener('change', (e) => {
+            const isEnabled = e.target.checked;
+            CONFIG.clusterEnabled = isEnabled;
+            clusterControls.style.display = isEnabled ? 'block' : 'none';
+
+            // Reinitialize the starfield to apply the clustering change
+            if (starfield) {
+                // Update the starfield's options
+                starfield.options.clusterEnabled = isEnabled;
+                // Recreate the stars with the new clustering setting
+                starfield.createStars();
+            }
+
             saveConfig();
         });
     }

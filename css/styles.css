@@ -72,6 +72,29 @@ body {
     cursor: move;
     user-select: none;
     z-index: 1000;
+    max-height: 95vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* Custom scrollbar for WebKit browsers */
+.controls::-webkit-scrollbar {
+    width: 6px;
+}
+
+.controls::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.controls::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.controls::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5);
 }
 
 .controls.dragging {
@@ -81,6 +104,13 @@ body {
 
 .control-group {
     margin-bottom: 1rem;
+}
+
+.control-group-block {  
+    margin: 1rem 0px; 
+    padding: 0.5rem; 
+    padding-right: 0rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Toggle Switch Styles */

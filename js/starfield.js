@@ -240,13 +240,16 @@ class Starfield {
         const maxStarsPerCluster = this.options.maxStarsPerCluster !== undefined ? this.options.maxStarsPerCluster : 25;
         const clusterCount = this.options.clusterCount !== undefined ? this.options.clusterCount : 5;
 
-        // Create 20% of stars in clusters
-        const clusteredStars = Math.floor(starCount * 0.2);
-        const starsPerCluster = Math.min(Math.floor(clusteredStars / clusterCount), maxStarsPerCluster);
-        this.createClusters(clusterCount, width, height, starsPerCluster, starMovementSpeed);
-
-        // Create 80% of stars distributed throughout the canvas
-        const remainingStars = starCount - (clusterCount * starsPerCluster);
+        // Create clustered or distributed stars based on clusterEnabled flag
+        let remainingStars = starCount;
+        
+        if (this.options.clusterEnabled !== false) {
+            // Only create clusters if clustering is enabled
+            const clusteredStars = Math.floor(starCount * 0.2);
+            const starsPerCluster = Math.min(Math.floor(clusteredStars / clusterCount), maxStarsPerCluster);
+            this.createClusters(clusterCount, width, height, starsPerCluster, starMovementSpeed);
+            remainingStars = starCount - (clusterCount * starsPerCluster);
+        }
         for (let i = 0; i < remainingStars; i++) {
             // Distribute some stars more towards the edges
             let x, y;
