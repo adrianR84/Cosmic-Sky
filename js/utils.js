@@ -144,3 +144,6 @@ class Utils {
         };
     }
 }
+
+// Export the Utils class as default
+export default Utils;

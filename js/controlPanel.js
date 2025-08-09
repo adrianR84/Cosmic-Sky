@@ -207,7 +207,5 @@ class ControlPanelManager {
     }
 }
 
-// Initialize the control panel when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const controlPanel = new ControlPanelManager();
-});
+// Export the ControlPanelManager class as default
+export default ControlPanelManager;

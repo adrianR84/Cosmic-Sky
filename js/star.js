@@ -1,3 +1,5 @@
+import Utils from './utils.js';
+
 /**
  * Represents a single star in the galaxy visualization with various animation effects.
  * Each star can have different visual properties and movement patterns.
@@ -364,3 +366,5 @@ class Star {
         if (this.pulseTween) this.pulseTween.kill();
     }
 }
+
+export { Star };

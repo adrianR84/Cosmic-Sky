@@ -1,3 +1,6 @@
+import { Star } from './star.js';
+import Utils from './utils.js';
+
 /**
  * Manages a collection of stars and their connections using Canvas 2D.
  * Handles star creation, animation, rendering, and user interaction.
@@ -712,19 +715,19 @@ class Starfield {
                         this.mouse.x, this.mouse.y
                     );
 
-                    console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
+                    // console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
 
                     // Use configured connection colors with opacity applied
                     const startColor = this.options.connectionColor.start || 'rgba(212, 14, 14, 0.8)';
                     const endColor = this.options.connectionColor.end || 'rgba(4, 49, 11, 0.4)';
 
-                    console.log(startColor, endColor);
+                    // console.log(startColor, endColor);
 
                     // Apply opacity to the colors
                     const startColorWithOpacity = this._applyOpacityToColor(startColor, opacity);
                     const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 0.5);
 
-                    console.log(startColorWithOpacity, endColorWithOpacity);
+                    // console.log(startColorWithOpacity, endColorWithOpacity);
 
                     gradient.addColorStop(0, startColorWithOpacity);
                     gradient.addColorStop(1, endColorWithOpacity);
@@ -807,3 +810,5 @@ class Starfield {
         }
     }
 }
+
+export { Starfield };

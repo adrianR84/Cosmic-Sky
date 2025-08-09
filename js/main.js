@@ -4,6 +4,12 @@
  * @module main
  */
 
+// Import configuration and utilities
+import { loadConfig, saveConfig, getConfig } from './config/index.js';
+import { Starfield } from './starfield.js';
+import ControlPanelManager from './controlPanel.js';
+import Utils from './utils.js';
+
 /** @type {Starfield} - The main starfield instance */
 let starfield;
 
@@ -13,88 +19,8 @@ let resizeTimeout;
 /** @type {boolean} - Flag to track if the application has been initialized */
 let isInitialized = false;
 
-/**
- * Application configuration object with default values.
- * @type {Object}
- * @property {number} starCount=1000 - Total number of stars in the visualization
- * @property {number} connectionDistance=250 - Maximum distance (in pixels) to draw connections between stars
- * @property {number} animationSpeed=1.0 - Global animation speed multiplier
- * @property {number} starMovementSpeed=0.2 - Speed multiplier for star movement (0.0 to 1.0)
- * @property {number} maxStarsPerCluster=25 - Maximum number of stars per cluster
- * @property {number} clusterCount=5 - Number of star clusters to create
- * @property {number} trailFadeSpeed=0.2 - Speed at which star trails fade (0.0 to 1.0)
- * @property {Object} colors - Color configuration
- * @property {number} colors.starHueMin=200 - Minimum hue value for stars (0-360)
- * @property {number} colors.starHueMax=300 - Maximum hue value for stars (0-360)
- * @property {number} colors.starSaturation=80 - Saturation for stars (0-100)
- * @property {number} colors.starLightness=80 - Lightness for stars (0-100)
- * @property {string} colors.connectionStart='rgba(255, 255, 255, 0.8)' - Start color for connections
- * @property {string} colors.connectionEnd='rgba(100, 149, 237, 0.4)' - End color for connections
- */
-/**
- * Default configuration values for the application.
- * These are used when no saved configuration exists.
- * @type {Object}
- */
-const DEFAULT_CONFIG = {
-    starCount: 1000,
-    connectionDistance: 250,
-    mouseConnectionsEnabled: true,
-    moveStarsAwayFromMouse: false,
-    animationSpeed: 1.0,
-    starMovementSpeed: 0.2,
-    maxStarsPerCluster: 100,
-    clusterCount: 5,
-    trailFadeSpeed: 0.2,
-    ellipseMovement: false,
-    ellipticalMovementRate: 0.1, // 10% of stars will have elliptical movement by default
-    bgColor: '#000428',
-    bgOpacity: 1.0,
-    parallax: {
-        enabled: true,
-        intensity: 0.2,
-        maxOffset: 100
-    },
-    colors: {
-        starHueMin: 200,
-        starHueMax: 300,
-        starSaturation: 80,
-        starLightness: 80,
-        connectionStart: 'rgba(3, 28, 39, 0.8)',
-        connectionEnd: 'rgba(146, 29, 8, 0.4)'
-    }
-};
-
-// Load configuration from localStorage or use defaults
-let CONFIG = { ...DEFAULT_CONFIG };
-
-/**
- * Save the current configuration to localStorage.
- * @returns {void}
- */
-function saveConfig() {
-    try {
-        localStorage.setItem('cosmicGalaxyConfig', JSON.stringify(CONFIG));
-    } catch (error) {
-        console.error('Failed to save configuration:', error);
-    }
-}
-
-/**
- * Load configuration from localStorage.
- * @returns {Object} The loaded configuration or null if none exists
- */
-function loadConfig() {
-    try {
-        const savedConfig = localStorage.getItem('cosmicGalaxyConfig');
-        if (savedConfig) {
-            return JSON.parse(savedConfig);
-        }
-    } catch (error) {
-        console.error('Failed to load configuration:', error);
-    }
-    return null;
-}
+// Load configuration with defaults
+let CONFIG = getConfig();
 
 
 
@@ -110,15 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Initialize with default config first
-    CONFIG = { ...DEFAULT_CONFIG };
-
-    // Load saved configuration and apply it
+    // Configuration is already loaded via getConfig()
+    // No need to manually merge with defaults as it's handled by the config module
     const savedConfig = loadConfig();
     if (savedConfig) {
-        // Merge saved config with defaults
-        CONFIG = { ...DEFAULT_CONFIG, ...savedConfig };
+        CONFIG = savedConfig;
     }
+
+    // Initialize the control panel
+    const controlPanel = new ControlPanelManager();
 
     // Initialize the starfield with the current config
     init();
@@ -183,6 +109,7 @@ function isCanvasSupported() {
  */
 function showUnsupportedMessage() {
     const message = document.createElement('div');
+    message.className = 'error-message';
     message.style.cssText = `
         position: fixed;
         top: 50%;
@@ -190,19 +117,63 @@ function showUnsupportedMessage() {
         transform: translate(-50%, -50%);
         background: rgba(0, 0, 0, 0.8);
         color: white;
-        padding: 20px 40px;
-        border-radius: 8px;
-        text-align: center;
+        padding: 20px;
+        border-radius: 5px;
         max-width: 80%;
+        text-align: center;
         z-index: 1000;
-        font-family: Arial, sans-serif;
     `;
     message.innerHTML = `
         <h2>Browser Not Supported</h2>
-        <p>Your browser doesn't support the required features for this visualization.</p>
-        <p>Please try using a modern browser like Chrome, Firefox, or Edge.</p>
+        <p>Your browser does not support all the features required for this visualization.</p>
+        <p>Please try using the latest version of Chrome, Firefox, Safari, or Edge.</p>
     `;
     document.body.appendChild(message);
+}
+
+/**
+ * Display an error message to the user.
+ * @param {string} message - The error message to display
+ * @returns {void}
+ */
+function showError(message) {
+    console.error(message);
+
+    // Check if we already have an error message displayed
+    let errorDiv = document.querySelector('.error-message');
+
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 50, 50, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        `;
+        document.body.appendChild(errorDiv);
+    }
+
+    errorDiv.textContent = message;
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (errorDiv) {
+            errorDiv.style.transition = 'opacity 0.5s';
+            errorDiv.style.opacity = '0';
+            setTimeout(() => {
+                if (errorDiv && document.body.contains(errorDiv)) {
+                    document.body.removeChild(errorDiv);
+                }
+            }, 500);
+        }
+    }, 5000);
 }
 
 /**
@@ -488,7 +459,7 @@ function initUIControls() {
             if (starfield) {
                 starfield.setMouseConnectionsEnabled(CONFIG.mouseConnectionsEnabled);
             }
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -499,7 +470,7 @@ function initUIControls() {
             CONFIG.bgColor = color;
             if (bgColorValue) bgColorValue.textContent = color;
             starfield.setBackgroundColor(color);
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -509,7 +480,7 @@ function initUIControls() {
             CONFIG.bgOpacity = opacity;
             if (opacityValue) opacityValue.textContent = `${e.target.value}%`;
             starfield.setBackgroundOpacity(opacity);
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -520,7 +491,7 @@ function initUIControls() {
             CONFIG.trailFadeSpeed = speed;
             document.getElementById('trailFadeSpeedValue').textContent = speed.toFixed(2);
             starfield.setTrailFadeSpeed(speed);
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -528,7 +499,7 @@ function initUIControls() {
         starCountInput.addEventListener('input', (e) => {
             CONFIG.starCount = parseInt(e.target.value);
             document.getElementById('starCountValue').textContent = CONFIG.starCount;
-            saveConfig();
+            saveConfig(CONFIG);
             init(); // Reinitialize with new star count
         });
     }
@@ -551,7 +522,7 @@ function initUIControls() {
                 starfield.createStars();
             }
 
-            saveConfig();
+            saveConfig(CONFIG);
         });
 
         // Update elliptical movement rate (displayed as percentage in UI but stored as 0-1)
@@ -576,7 +547,7 @@ function initUIControls() {
                     starfield.createStars();
                 }
 
-                saveConfig();
+                saveConfig(CONFIG);
             });
         }
 
@@ -601,7 +572,7 @@ function initUIControls() {
                     });
                 }
 
-                saveConfig();
+                saveConfig(CONFIG);
             });
         }
     }
@@ -629,7 +600,7 @@ function initUIControls() {
                 starfield.createStars();
             }
 
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -641,7 +612,7 @@ function initUIControls() {
             if (starfield) {
                 starfield.setConnectionDistance(CONFIG.connectionDistance);
             }
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -651,7 +622,7 @@ function initUIControls() {
             document.getElementById('speedValue').textContent = newSpeed.toFixed(1);
             CONFIG.animationSpeed = newSpeed;
             if (starfield) starfield.setAnimationSpeed(newSpeed);
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -659,7 +630,7 @@ function initUIControls() {
         maxStarsPerClusterInput.addEventListener('input', (e) => {
             CONFIG.maxStarsPerCluster = parseInt(e.target.value);
             document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.maxStarsPerCluster;
-            saveConfig();
+            saveConfig(CONFIG);
             // Reinitialize to apply the new max stars per cluster
             init();
         });
@@ -669,7 +640,7 @@ function initUIControls() {
         clusterCountInput.addEventListener('input', (e) => {
             CONFIG.clusterCount = parseInt(e.target.value);
             document.getElementById('clusterCountValue').textContent = CONFIG.clusterCount;
-            saveConfig();
+            saveConfig(CONFIG);
             // Reinitialize to apply the new cluster count
             init();
         });
@@ -683,7 +654,7 @@ function initUIControls() {
             if (starfield) {
                 starfield.setTrailFadeSpeed(speed);
             }
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -702,7 +673,7 @@ function initUIControls() {
             if (starfield) {
                 CONFIG.starMovementSpeed = speed;
                 starfield.setStarMovementSpeed(speed);
-                saveConfig();
+                saveConfig(CONFIG);
             }
         });
     }
@@ -729,7 +700,7 @@ function initUIControls() {
 
             // Update UI to show/hide parallax controls based on enabled state
             updateParallaxUI();
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -750,7 +721,7 @@ function initUIControls() {
             }
 
             document.getElementById('parallaxIntensityValue').textContent = intensity.toFixed(2);
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 
@@ -771,7 +742,7 @@ function initUIControls() {
             }
 
             document.getElementById('parallaxMaxOffsetValue').textContent = maxOffset;
-            saveConfig();
+            saveConfig(CONFIG);
         });
     }
 }
