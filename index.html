@@ -10,94 +10,105 @@
 <body>
     
     <div class="ui">
-        <div class="header">
-            <h1 class="title">Cosmic Galaxy</h1>
+        <!-- <div class="header">
+            <h1 class="title">Cosmic Sky</h1>
             <p>Move your cursor to interact with the stars</p>
         </div>
-        
-        <div class="controls" id="controlsPanel">
-            <div class="control-group">
-                <label for="starCount">Star Count: <span id="starCountValue">1500</span></label>
-                <input type="range" id="starCount" min="100" max="4000" value="1500" step="100">
-            </div>
+         -->
+        <div id="controlsPanel">
 
-            <div class="control-group">
-                <label for="animationSpeed">Animation Speed: <span id="speedValue">1.0</span>x</label>
-                <input type="range" id="animationSpeed" min="0.1" max="3" value="1.0" step="0.1">
-            </div>
-            <div class="control-group">
-                <label class="toggle-container">
-                    <input type="checkbox" id="enableMouseConnections" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-label">Connect Stars to Cursor</span>
-                </label>
-            </div>
-            <div id="connectionControls" class="control-group-block">
-                <label for="connectionDistance">Connection Distance: <span id="distanceValue">100</span></label>
-                <input type="range" id="connectionDistance" min="100" max="400" value="100" step="20">
-            </div>
-            
-            <div class="control-group">
-                <label class="toggle-container">
-                    <input type="checkbox" id="enableClusters" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-label">Group Stars in Clusters</span>
-                </label>
-            </div>
-            <div id="clusterControls" class="control-group-block">
-                <label for="maxStarsPerCluster">Max Stars Per Cluster: <span id="maxStarsPerClusterValue">25</span></label>
-                <input type="range" id="maxStarsPerCluster" min="5" max="100" value="25" step="5">
-                <label for="clusterCount">Number of Clusters: <span id="clusterCountValue">5</span></label>
-                <input type="range" id="clusterCount" min="1" max="10" value="5" step="1">
-            </div>
-            
-            <div class="control-group">
-                <label for="trailFadeSpeed">Trail Fade Speed: <span id="trailFadeSpeedValue">0.2</span></label>
-                <input type="range" id="trailFadeSpeed" min="0.01" max="0.3" value="0.2" step="0.01">
-            </div>
+            <div class="modal-header-dark">
+                <h3 class="modal-title-dark">Control the Sky</h3>
+                <button class="minimize-btn-dark" title="Minimize">&minus;</button>
+              </div>
 
-            <div class="control-group">
-                <label class="toggle-container">
-                    <input type="checkbox" id="ellipseMovement">
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-label">Star Movement</span>
-                </label>
-            </div>
-            
-            <div class="control-group" id="ellipseControls" style="display: none;">
-                <div class="control-group-block">
-                    <label for="ellipticalMovementRate">Percentage of Stars Moving: <span id="ellipticalMovementRateValue">0.1</span>%</label>
-                    <input type="range" id="ellipticalMovementRate" min="0" max="1" value="0.1" step="0.05">
-                    
-                    <label for="starMovementSpeed">Star Movement Speed: <span id="starMovementSpeedValue">0.2</span>x</label>
-                    <input type="range" id="starMovementSpeed" min="0.05" max="1" value="0.2" step="0.05">
+
+              <div class="modal-content-dark">
+
+                <div class="control-group">
+                    <label for="starCount">Star Count: <span id="starCountValue">1500</span></label>
+                    <input type="range" id="starCount" min="100" max="4000" value="1500" step="100">
                 </div>
-            </div>
-
-            <div class="control-group">
-                <label for="bgColor">Background Color: <span id="bgColorValue">#000428</span></label>
-                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                    <input type="color" id="bgColor" value="#000428" style="width: 50px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
-                    <input type="range" id="bgOpacity" min="0" max="100" value="100" style="flex: 1;">
-                    <span id="opacityValue" style="font-size: 0.8em; min-width: 30px; text-align: right;">100%</span>
+    
+                <div class="control-group">
+                    <label for="animationSpeed">Animation Speed: <span id="speedValue">1.0</span>x</label>
+                    <input type="range" id="animationSpeed" min="0.1" max="3" value="1.0" step="0.1">
                 </div>
-            </div>
-
-            <div class="control-group">
-                <label class="toggle-container">
-                    <input type="checkbox" id="parallaxEnabled" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-label">Parallax Effect</span>
-                </label>
-            </div>
-            
-            <div id="parallaxControls" class="control-group-block">
-                <label for="parallaxIntensity">Parallax Intensity: <span id="parallaxIntensityValue">0.2</span></label>
-                <input type="range" id="parallaxIntensity" min="0" max="1" value="0.2" step="0.05">
+                <div class="control-group">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="enableMouseConnections" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Connect Stars to Cursor</span>
+                    </label>
+                </div>
+                <div id="connectionControls" class="control-group-block">
+                    <label for="connectionDistance">Connection Distance: <span id="distanceValue">100</span></label>
+                    <input type="range" id="connectionDistance" min="100" max="400" value="100" step="20">
+                </div>
                 
-                <label for="parallaxMaxOffset" style="margin-top: 10px;">Max Movement: <span id="parallaxMaxOffsetValue">100</span>px</label>
-                <input type="range" id="parallaxMaxOffset" min="20" max="200" value="100" step="5">
-            </div>
+                <div class="control-group">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="enableClusters" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Group Stars in Clusters</span>
+                    </label>
+                </div>
+                <div id="clusterControls" class="control-group-block">
+                    <label for="maxStarsPerCluster">Max Stars Per Cluster: <span id="maxStarsPerClusterValue">25</span></label>
+                    <input type="range" id="maxStarsPerCluster" min="5" max="100" value="25" step="5">
+                    <label for="clusterCount">Number of Clusters: <span id="clusterCountValue">5</span></label>
+                    <input type="range" id="clusterCount" min="1" max="10" value="5" step="1">
+                </div>
+                
+                <div class="control-group">
+                    <label for="trailFadeSpeed">Trail Fade Speed: <span id="trailFadeSpeedValue">0.2</span></label>
+                    <input type="range" id="trailFadeSpeed" min="0.01" max="0.3" value="0.2" step="0.01">
+                </div>
+    
+                <div class="control-group">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="ellipseMovement">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Star Movement</span>
+                    </label>
+                </div>
+                
+                <div class="control-group" id="ellipseControls" style="display: none;">
+                    <div class="control-group-block">
+                        <label for="ellipticalMovementRate">Percentage of Stars Moving: <span id="ellipticalMovementRateValue">0.1</span>%</label>
+                        <input type="range" id="ellipticalMovementRate" min="0" max="1" value="0.1" step="0.05">
+                        
+                        <label for="starMovementSpeed">Star Movement Speed: <span id="starMovementSpeedValue">0.2</span>x</label>
+                        <input type="range" id="starMovementSpeed" min="0.05" max="1" value="0.2" step="0.05">
+                    </div>
+                </div>
+    
+                <div class="control-group">
+                    <label for="bgColor">Background Color: <span id="bgColorValue">#000428</span></label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                        <input type="color" id="bgColor" value="#000428" style="width: 50px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
+                        <input type="range" id="bgOpacity" min="0" max="100" value="100" style="flex: 1;">
+                        <span id="opacityValue" style="font-size: 0.8em; min-width: 30px; text-align: right;">100%</span>
+                    </div>
+                </div>
+    
+                <div class="control-group">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="parallaxEnabled" checked>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Parallax Effect</span>
+                    </label>
+                </div>
+                
+                <div id="parallaxControls" class="control-group-block">
+                    <label for="parallaxIntensity">Parallax Intensity: <span id="parallaxIntensityValue">0.2</span></label>
+                    <input type="range" id="parallaxIntensity" min="0" max="1" value="0.2" step="0.05">
+                    
+                    <label for="parallaxMaxOffset" style="margin-top: 10px;">Max Movement: <span id="parallaxMaxOffsetValue">100</span>px</label>
+                    <input type="range" id="parallaxMaxOffset" min="20" max="200" value="100" step="5">
+                </div>
+
+              </div>
 
         </div>
     </div>
@@ -115,8 +126,9 @@
     
     <!-- Main app scripts -->
     <script src="js/utils.js"></script>
-    <script src="js/star.js"></script>
     <script src="js/starfield.js"></script>
+    <script src="js/star.js"></script>
+    <script src="js/controlPanel.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

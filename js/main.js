@@ -129,8 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize parallax controls state
     updateParallaxUI();
 
-    // Make controls draggable
-    initDraggableControls();
+    // The control panel is now managed by ControlPanelManager in controlPanel.js
+    // which is automatically initialized when the DOM is loaded
 
     // Set up window resize handler
     window.addEventListener('resize', handleResize);
@@ -774,60 +774,6 @@ function initUIControls() {
             saveConfig();
         });
     }
-}
-
-/**
- * Makes the controls panel draggable
- * @returns {void}
- */
-function initDraggableControls() {
-    const controls = document.querySelector('.controls');
-    if (!controls) return;
-
-    let isDragging = false;
-    let offsetX, offsetY;
-
-    // Make controls draggable
-    controls.addEventListener('mousedown', (e) => {
-        // Only start drag on the controls panel itself, not on form elements
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL' || e.target.tagName === 'SPAN') {
-            return;
-        }
-
-        isDragging = true;
-        controls.classList.add('dragging');
-
-        // Calculate the offset from the mouse to the top-left corner of the controls
-        const rect = controls.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-
-        // Prevent text selection while dragging
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-
-        // Calculate new position
-        const x = e.clientX - offsetX;
-        const y = e.clientY - offsetY;
-
-        // Update position
-        controls.style.left = `${x}px`;
-        controls.style.top = `${y}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        controls.classList.remove('dragging');
-    });
-
-    // Make sure we stop dragging if mouse leaves the window
-    document.addEventListener('mouseleave', () => {
-        isDragging = false;
-        controls.classList.remove('dragging');
-    });
 }
 
 /**
