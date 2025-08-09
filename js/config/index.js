@@ -5,7 +5,7 @@
 
 // Import dependencies
 import { DEFAULT_CONFIG } from './defaults.js';
-import { loadConfig, saveConfig, mergeWithDefaults } from './storage.js';
+import { loadConfig, saveConfig, mergeWithDefaults } from '../utils/storage.js';
 
 /**
  * Get the current configuration, merging saved config with defaults.

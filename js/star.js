@@ -1,4 +1,4 @@
-import Utils from './utils.js';
+import Utils from './utils/utils.js';
 
 /**
  * Represents a single star in the galaxy visualization with various animation effects.

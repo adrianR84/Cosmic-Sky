@@ -7,8 +7,8 @@
 // Import configuration and utilities
 import { loadConfig, saveConfig, getConfig } from './config/index.js';
 import { Starfield } from './starfield.js';
-import ControlPanelManager from './controlPanel.js';
-import Utils from './utils.js';
+import ControlPanelManager from './utils/controlPanel.js';
+import Utils from './utils/utils.js';
 
 /** @type {Starfield} - The main starfield instance */
 let starfield;

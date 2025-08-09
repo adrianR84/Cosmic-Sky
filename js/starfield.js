@@ -1,5 +1,5 @@
 import { Star } from './star.js';
-import Utils from './utils.js';
+import Utils from './utils/utils.js';
 
 /**
  * Manages a collection of stars and their connections using Canvas 2D.
