@@ -25,8 +25,10 @@ const DEFAULT_CONFIG = {
     },
 
     // Visual settings
-    bgColor: '#000428',
-    bgOpacity: 1.0,
+    background: {
+        color: '#000428',
+        opacity: 1.0
+    },
 
     // Features
     mouseConnection: {

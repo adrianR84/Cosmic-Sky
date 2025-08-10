@@ -88,7 +88,10 @@ function init() {
                 start: CONFIG.colors.connectionStart,
                 end: CONFIG.colors.connectionEnd
             },
-            backgroundColor: 'transparent',
+            background: {
+                color: CONFIG.background?.color || '#000428',
+                opacity: CONFIG.background?.opacity ?? 1
+            },
             trailFadeSpeed: CONFIG.trailFadeSpeed,
 
             ellipseEnabled: CONFIG.starMoving.enabled,
@@ -242,12 +245,14 @@ function initUIControls() {
     }
 
     if (bgColorPicker) {
-        bgColorPicker.value = CONFIG.bgColor || '#000428';
-        if (bgColorValue) bgColorValue.textContent = CONFIG.bgColor || '#000428';
+        const bgColor = CONFIG.background?.color || '#000428';
+        bgColorPicker.value = bgColor;
+        if (bgColorValue) bgColorValue.textContent = bgColor;
     }
 
     if (bgOpacitySlider) {
-        const opacityPercent = Math.round((CONFIG.bgOpacity || 1) * 100);
+        const opacity = CONFIG.background?.opacity ?? 1;
+        const opacityPercent = Math.round(opacity * 100);
         bgOpacitySlider.value = opacityPercent;
         if (opacityValue) opacityValue.textContent = `${opacityPercent}%`;
     }
@@ -281,7 +286,8 @@ function initUIControls() {
     if (bgColorPicker && starfield) {
         bgColorPicker.addEventListener('input', (e) => {
             const color = e.target.value;
-            CONFIG.bgColor = color;
+            if (!CONFIG.background) CONFIG.background = {};
+            CONFIG.background.color = color;
             if (bgColorValue) bgColorValue.textContent = color;
             starfield.setBackgroundColor(color);
             saveConfig(CONFIG);
@@ -291,7 +297,8 @@ function initUIControls() {
     if (bgOpacitySlider && starfield) {
         bgOpacitySlider.addEventListener('input', (e) => {
             const opacity = parseInt(e.target.value) / 100;
-            CONFIG.bgOpacity = opacity;
+            if (!CONFIG.background) CONFIG.background = {};
+            CONFIG.background.opacity = opacity;
             if (opacityValue) opacityValue.textContent = `${e.target.value}%`;
             starfield.setBackgroundOpacity(opacity);
             saveConfig(CONFIG);
@@ -545,7 +552,7 @@ function initUIControls() {
         // Set initial value display
         const starMovementSpeedValue = document.getElementById('starMovementSpeedValue');
         if (starMovementSpeedValue) {
-            starMovementSpeedValue.textContent = CONFIG.starMovementSpeed.toFixed(2);
+            starMovementSpeedValue.textContent = CONFIG.starMoving.speed.toFixed(2);
         }
 
         starMovementSpeedInput.addEventListener('input', (e) => {
@@ -554,7 +561,7 @@ function initUIControls() {
                 starMovementSpeedValue.textContent = speed.toFixed(2);
             }
             if (starfield) {
-                CONFIG.starMovementSpeed = speed;
+                CONFIG.starMoving.speed = speed;
                 starfield.setStarMovementSpeed(speed);
                 saveConfig(CONFIG);
                 starfield.createStars();

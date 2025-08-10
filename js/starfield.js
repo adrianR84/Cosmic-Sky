@@ -33,15 +33,17 @@ class Starfield {
             connectionDistance: 150,
             connectionOpacity: 0.2,
             starColor: null, // null for random colors
-            backgroundColor: '#000428', // Default background color
-            backgroundOpacity: 1, // Default opacity (0-1)
+            background: {
+                color: '#000428',
+                opacity: 1
+            },
             ellipseEnabled: false, // Default to original movement
             ellipticalMovementRate: options.ellipticalMovementRate !== undefined ? options.ellipticalMovementRate : 0.1,
             ...options
         };
 
         // Store the parsed color values for performance
-        this._bgColor = this._parseColor(this.options.backgroundColor);
+        this._bgColor = this._parseColor(this.options.background.color);
 
         // State
         this.stars = [];
@@ -437,7 +439,11 @@ class Starfield {
      * @param {string} color - CSS color string (hex, rgb, or rgba)
      */
     setBackgroundColor(color) {
-        this.options.backgroundColor = color;
+        if (!this.options.background) {
+            this.options.background = { color, opacity: 1 };
+        } else {
+            this.options.background.color = color;
+        }
         this._bgColor = this._parseColor(color);
     }
 
@@ -446,7 +452,10 @@ class Starfield {
      * @param {number} opacity - Opacity value (0-1)
      */
     setBackgroundOpacity(opacity) {
-        this.options.backgroundOpacity = Math.min(1, Math.max(0, opacity));
+        if (!this.options.background) {
+            this.options.background = { color: '#000428', opacity: 1 };
+        }
+        this.options.background.opacity = Math.min(1, Math.max(0, opacity));
     }
 
     /**
@@ -468,7 +477,7 @@ class Starfield {
 
         // Clear canvas with configurable background color and trail fade effect
         const trailFadeSpeed = this.options.trailFadeSpeed !== undefined ? this.options.trailFadeSpeed : 0.05;
-        const opacity = (this.options.backgroundOpacity || 1) * trailFadeSpeed;
+        const opacity = (this.options.background.opacity || 1) * trailFadeSpeed;
         this.ctx.fillStyle = `rgba(${this._bgColor.r}, ${this._bgColor.g}, ${this._bgColor.b}, ${opacity})`;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
