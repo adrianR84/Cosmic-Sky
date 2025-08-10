@@ -58,8 +58,9 @@ const DEFAULT_CONFIG = {
         starHueMax: 300,
         starSaturation: 80,
         starLightness: 80,
-        connectionStart: 'rgba(4, 75, 22, 1)',
-        connectionEnd: 'rgba(224, 235, 238, 1)'
+        connectionStart: '#044b16',
+        connectionEnd: '#e0ebee',
+        connectionOpacity: 0.5
     }
 };
 

@@ -31,7 +31,7 @@ class Starfield {
         this.options = {
             starCount: 500,
             connectionDistance: 150,
-            connectionOpacity: 0.2,
+            // connectionOpacity: 0.2,
             starColor: null, // null for random colors
             background: {
                 color: '#000428',
@@ -454,8 +454,28 @@ class Starfield {
     setBackgroundOpacity(opacity) {
         if (!this.options.background) {
             this.options.background = { color: '#000428', opacity: 1 };
+        } else {
+            this.options.background.opacity = opacity;
         }
-        this.options.background.opacity = Math.min(1, Math.max(0, opacity));
+        // This will trigger a redraw with the new colors
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animate();
+        }
+    }
+
+    /**
+     * Set the connection line opacity
+     * @param {number} opacity - Opacity value (0-1)
+     */
+    setConnectionOpacity(opacity) {
+        this.options.connectionColor.opacity = Math.max(0, Math.min(1, opacity));
+
+        // Force a redraw to show the updated opacity immediately
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animate();
+        }
     }
 
     /**
@@ -522,7 +542,8 @@ class Starfield {
      */
     drawConnections() {
         if (this.options.connectionDistance > 0 && this.mouseConnectionsEnabled) {
-            const { connectionDistance, connectionOpacity } = this.options;
+            const connectionDistance = this.options.connectionDistance || 150;
+
             const { width, height } = this.canvas;
             const ctx = this.ctx;
 
@@ -536,35 +557,30 @@ class Starfield {
             // Reset visible connections counter
             this.visibleConnections = 0;
 
+            // Get connection colors from options with fallbacks
+            const startColor = this.options.connectionColor?.start || '#e0ebee';
+            const endColor = this.options.connectionColor?.end || '#044b16';
+            const connectionOpacity = this.options.connectionColor?.opacity || 0.2;
+
             // Draw connections to mouse
             this.stars.forEach(star => {
                 const dist = Utils.distance(star.x, star.y, this.mouse.x, this.mouse.y);
 
                 if (dist < connectionDistance) {
-                    const opacity = (1 - dist / connectionDistance) * connectionOpacity;
+                    const distanceRatio = 1 - (dist / connectionDistance);
+                    const opacity = distanceRatio * connectionOpacity;
 
-                    // Create gradient for connection line using configured colors
-                    const gradient = ctx.createLinearGradient(
-                        star.x, star.y,
-                        this.mouse.x, this.mouse.y
-                    );
-
-                    console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
-
-                    // Use configured connection colors with opacity applied
-                    const startColor = this.options.connectionColor.start || 'rgba(226, 226, 235, 0.8)';
-                    const endColor = this.options.connectionColor.end || 'rgba(4, 49, 11, 0.4)';
-
-                    // Apply opacity to the colors
+                    // Create gradient for this connection
+                    const gradient = ctx.createLinearGradient(star.x, star.y, this.mouse.x, this.mouse.y);
+                    
+                    // Apply opacity to the colors in the gradient
                     const startColorWithOpacity = this._applyOpacityToColor(startColor, opacity);
-                    const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 1);
-
-                    // console.log(startColorWithOpacity, endColorWithOpacity);
-
+                    const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 0.8);
+                    
                     gradient.addColorStop(0, startColorWithOpacity);
                     gradient.addColorStop(1, endColorWithOpacity);
 
-                    // Draw connection line
+                    // Draw connection line with gradient
                     ctx.beginPath();
                     ctx.moveTo(star.x, star.y);
                     ctx.lineTo(this.mouse.x, this.mouse.y);

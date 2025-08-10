@@ -86,7 +86,8 @@ function init() {
             },
             connectionColor: {
                 start: CONFIG.colors.connectionStart,
-                end: CONFIG.colors.connectionEnd
+                end: CONFIG.colors.connectionEnd,
+                opacity: CONFIG.colors.connectionOpacity
             },
             background: {
                 color: CONFIG.background?.color || '#000428',
@@ -277,6 +278,88 @@ function initUIControls() {
             }
             if (starfield) {
                 starfield.mouseConnectionsEnabled = CONFIG.mouseConnection.enabled;
+            }
+            saveConfig(CONFIG);
+        });
+    }
+
+    // Initialize connection color controls
+    const connectionColorStartInput = document.getElementById('connectionColorStart');
+    const connectionColorEndInput = document.getElementById('connectionColorEnd');
+    const connectionOpacityInput = document.getElementById('connectionOpacity');
+
+    // Helper function to convert rgba to hex
+    const rgbaToHex = (rgba) => {
+        // Extract r, g, b values from rgba string
+        const values = rgba.match(/\d+/g);
+        if (!values || values.length < 3) return '#000000';
+
+        const r = parseInt(values[0]).toString(16).padStart(2, '0');
+        const g = parseInt(values[1]).toString(16).padStart(2, '0');
+        const b = parseInt(values[2]).toString(16).padStart(2, '0');
+
+        return `#${r}${g}${b}`.toLowerCase();
+    };
+
+    // Set initial values from config
+    if (connectionColorStartInput) {
+        const startColor = CONFIG.colors.connectionStart || '#044b16';
+        const hexColor = startColor.startsWith('#') ? startColor : rgbaToHex(startColor);
+        connectionColorStartInput.value = hexColor;
+        document.getElementById('connectionColorStartValue').textContent = hexColor;
+    }
+
+    if (connectionColorEndInput) {
+        const endColor = CONFIG.colors.connectionEnd || '#e0ebee';
+        const hexColor = endColor.startsWith('#') ? endColor : rgbaToHex(endColor);
+        connectionColorEndInput.value = hexColor;
+        document.getElementById('connectionColorEndValue').textContent = hexColor;
+    }
+
+    if (connectionOpacityInput) {
+        const opacityPercent = Math.round((CONFIG.colors.connectionOpacity || 0.2) * 100);
+        connectionOpacityInput.value = opacityPercent;
+        document.getElementById('connectionOpacityValue').textContent = `${opacityPercent}`;
+    }
+
+    // Add event listeners for connection color controls
+    if (connectionColorStartInput && starfield) {
+        connectionColorStartInput.addEventListener('input', (e) => {
+            const color = e.target.value;
+            CONFIG.colors.connectionStart = color;
+            document.getElementById('connectionColorStartValue').textContent = color;
+
+            if (starfield.options.connectionColor) {
+                starfield.options.connectionColor.start = color;
+                starfield.setConnectionOpacity();
+            }
+            saveConfig(CONFIG);
+        });
+    }
+
+    if (connectionColorEndInput && starfield) {
+        connectionColorEndInput.addEventListener('input', (e) => {
+            const color = e.target.value;
+            CONFIG.colors.connectionEnd = color;
+            document.getElementById('connectionColorEndValue').textContent = color;
+
+            if (starfield.options.connectionColor) {
+                starfield.options.connectionColor.end = color;
+                starfield.setConnectionOpacity();
+            }
+            saveConfig(CONFIG);
+        });
+    }
+
+    if (connectionOpacityInput && starfield) {
+        connectionOpacityInput.addEventListener('input', (e) => {
+            const opacity = parseInt(e.target.value) / 100; // Convert to 0-1 range
+            CONFIG.colors.connectionOpacity = opacity;
+            document.getElementById('connectionOpacityValue').textContent = `${e.target.value}`;
+
+            if (starfield) {
+                
+                starfield.setConnectionOpacity(opacity);
             }
             saveConfig(CONFIG);
         });

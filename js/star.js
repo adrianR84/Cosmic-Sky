@@ -321,49 +321,59 @@ class Star {
     draw(ctx) {
         if (!ctx) return;
         
-        // Create gradient for the star
-        const gradient = ctx.createRadialGradient(
-            this.x, this.y, 0,
-            this.x, this.y, this.currentSize * 1.5
-        );
-        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha})`);
-        gradient.addColorStop(0.7, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha * 0.5})`);
-        gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
-
         // Apply parallax offset to position
         const drawX = this.x + (this.parallaxX || 0);
         const drawY = this.y + (this.parallaxY || 0);
+        const gradientRadius = this.currentSize * 1.5;
+        
+        // Skip rendering if any position values are invalid
+        if (!Number.isFinite(drawX) || !Number.isFinite(drawY) || !Number.isFinite(gradientRadius)) {
+            console.warn('Skipping star draw due to invalid position values', { 
+                x: this.x, 
+                y: this.y, 
+                parallaxX: this.parallaxX, 
+                parallaxY: this.parallaxY, 
+                currentSize: this.currentSize 
+            });
+            return;
+        }
+        
+        try {
+            // Create gradient for the star
+            const gradient = ctx.createRadialGradient(
+                drawX, drawY, 0,
+                drawX, drawY, gradientRadius
+            );
+            gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha})`);
+            gradient.addColorStop(0.7, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha * 0.5})`);
+            gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
+            
+            // Draw the main star
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, this.currentSize, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
 
-        // Draw the star
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, this.currentSize, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
+            // Add a small bright center
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, this.currentSize * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha * 1.5})`;
+            ctx.fill();
 
-        // Add a small bright center
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, this.currentSize * 0.3, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${this.hue}, ${this.saturation}%, 95%, 0.8)`;
-        ctx.fill();
-    }
-
-    /**
-     * Reset the star to its original position and visual state.
-     */
-    reset() {
-        this.x = this.originX;
-        this.y = this.originY;
-        this.currentSize = this.size;
-        this.targetSize = this.size;
-    }
-
-    /**
-     * Clean up animations and resources to prevent memory leaks.
-     * Should be called when the star is no longer needed.
-     */
-    dispose() {
-        if (this.floatTween) this.floatTween.kill();
-        if (this.pulseTween) this.pulseTween.kill();
+            // Add subtle glow
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, this.currentSize * 1.5, 0, Math.PI * 2);
+            const glowGradient = ctx.createRadialGradient(
+                drawX, drawY, 0,
+                drawX, drawY, this.currentSize * 1.5
+            );
+            glowGradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha * 0.2})`);
+            glowGradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, 95%, 0)`);
+            ctx.fillStyle = glowGradient;
+            ctx.fill();
+        } catch (error) {
+            console.error('Error drawing star:', error);
+        }
     }
 }
 
