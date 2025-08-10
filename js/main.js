@@ -296,7 +296,6 @@ function initUIControls() {
             }
             if (starfield) {
                 starfield.mouseConnectionsEnabled = CONFIG.mouseConnection.enabled;
-                starfield.createStars();
             }
             saveConfig(CONFIG);
         });
@@ -472,8 +471,10 @@ function initUIControls() {
             CONFIG.clusters.maxStarsPerCluster = parseInt(e.target.value);
             document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.clusters.maxStarsPerCluster;
             saveConfig(CONFIG);
-            // Reinitialize to apply the new max stars per cluster
-            // init();
+            if (starfield) {
+                starfield.options.maxStarsPerCluster = CONFIG.clusters.maxStarsPerCluster;
+                starfield.createStars();
+            }
         });
     }
 
@@ -490,8 +491,10 @@ function initUIControls() {
             CONFIG.clusters.clusterCount = parseInt(e.target.value);
             document.getElementById('clusterCountValue').textContent = CONFIG.clusters.clusterCount;
             saveConfig(CONFIG);
-            // Reinitialize to apply the new cluster count
-            // init();
+            if (starfield) {
+                starfield.options.clusterCount = CONFIG.clusters.clusterCount;
+                starfield.createStars();
+            }
         });
     }
 
@@ -516,11 +519,35 @@ function initUIControls() {
             const newSpeed = parseFloat(e.target.value);
             document.getElementById('speedValue').textContent = newSpeed.toFixed(1);
             CONFIG.animationSpeed = newSpeed;
-            if (starfield) starfield.setAnimationSpeed(newSpeed);
+            if (starfield) {
+                starfield.setAnimationSpeed(newSpeed);
+                // gsap.globalTimeline.timeScale(newSpeed);
+            }
             saveConfig(CONFIG);
         });
     }
 
+
+    // Add event listener for regenerate canvas button
+    const regenerateBtn = document.getElementById('regenerateCanvas');
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', () => {
+            if (starfield) {
+                // Recreate stars with current settings
+                starfield.createStars();
+
+                // Show a brief visual feedback
+                regenerateBtn.textContent = 'Regenerating...';
+                regenerateBtn.disabled = true;
+
+                // Reset button state after a short delay
+                setTimeout(() => {
+                    regenerateBtn.textContent = 'Regenerate Canvas';
+                    regenerateBtn.disabled = false;
+                }, 1000);
+            }
+        });
+    }
 
     if (trailFadeSpeedInput) {
         trailFadeSpeedInput.addEventListener('input', (e) => {
@@ -529,6 +556,7 @@ function initUIControls() {
             document.getElementById('trailFadeSpeedValue').textContent = speed.toFixed(2);
             if (starfield) {
                 starfield.setTrailFadeSpeed(speed);
+                // starfield.createStars();
             }
             saveConfig(CONFIG);
         });
@@ -550,6 +578,7 @@ function initUIControls() {
                 CONFIG.starMovementSpeed = speed;
                 starfield.setStarMovementSpeed(speed);
                 saveConfig(CONFIG);
+                starfield.createStars();
             }
         });
     }

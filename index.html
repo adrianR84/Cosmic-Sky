@@ -19,11 +19,17 @@
 
             <div class="modal-header-dark">
                 <h3 class="modal-title-dark">Control the Sky</h3>
-                <button class="minimize-btn-dark" title="Minimize">&minus;</button>
-              </div>
+                <div class="modal-header-buttons">
+                    <button class="minimize-btn-dark" id="minimize-btn-dark" title="Minimize">&minus;</button>
+                    <button class="minimize-btn-dark hide" id="hide-btn-dark" title="Hide">x</button>
+                </div>
+            </div>
 
+            <div class="modal-content-dark">
 
-              <div class="modal-content-dark">
+                <div class="control-group">
+                    <button id="regenerateCanvas" class="regenerate-btn">Regenerate Canvas</button>
+                </div>
 
                 <div class="control-group">
                     <label for="starCount">Star Count: <span id="starCountValue">1500</span></label>
@@ -114,12 +120,13 @@
     </div>
 
     <canvas id="canvas"></canvas>
-    
+    <!--     
     <div class="stats">
         <span id="fps">0</span> FPS | 
         <span id="stars">0</span> Stars | 
         <span id="connections">0</span> Connections
     </div>
+    -->
 
     <!-- GSAP for smooth animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>

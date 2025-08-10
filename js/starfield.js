@@ -487,7 +487,7 @@ class Starfield {
         this.drawStars();
 
         // Update stats display
-        this.updateStats();
+        // this.updateStats();
     }
 
     /**
@@ -685,54 +685,6 @@ class Starfield {
             this.resize();
         });
 
-        // UI Controls
-        const starCountInput = document.getElementById('starCount');
-        const distanceInput = document.getElementById('connectionDistance');
-        const speedInput = document.getElementById('animationSpeed');
-        const starMovementSpeedInput = document.getElementById('starMovementSpeed');
-        const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
-        const clusterCountInput = document.getElementById('clusterCount');
-        const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
-
-
-        if (speedInput) {
-            speedInput.addEventListener('input', (e) => {
-                const speed = parseFloat(e.target.value);
-                document.getElementById('speedValue').textContent = speed.toFixed(1);
-                gsap.globalTimeline.timeScale(speed);
-            });
-        }
-
-        if (starMovementSpeedInput) {
-            starMovementSpeedInput.addEventListener('input', (e) => {
-                this.options.starMovementSpeed = parseFloat(e.target.value);
-                document.getElementById('starMovementSpeedValue').textContent = this.options.starMovementSpeed.toFixed(2);
-                this.createStars(); // Recreate stars with new movement speed
-            });
-        }
-
-        if (maxStarsPerClusterInput) {
-            maxStarsPerClusterInput.addEventListener('input', (e) => {
-                this.options.maxStarsPerCluster = parseInt(e.target.value);
-                document.getElementById('maxStarsPerClusterValue').textContent = this.options.maxStarsPerCluster;
-                this.createStars(); // Recreate stars with new cluster size
-            });
-        }
-
-        if (clusterCountInput) {
-            clusterCountInput.addEventListener('input', (e) => {
-                this.options.clusterCount = parseInt(e.target.value);
-                document.getElementById('clusterCountValue').textContent = this.options.clusterCount;
-                this.createStars(); // Recreate stars with new cluster count
-            });
-        }
-
-        if (trailFadeSpeedInput) {
-            trailFadeSpeedInput.addEventListener('input', (e) => {
-                this.options.trailFadeSpeed = parseFloat(e.target.value);
-                document.getElementById('trailFadeSpeedValue').textContent = this.options.trailFadeSpeed.toFixed(2);
-            });
-        }
     }
 
 

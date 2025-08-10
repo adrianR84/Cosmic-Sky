@@ -3,6 +3,7 @@
  * Handles dragging, resizing, and minimizing the control panel
  */
 import { saveConfig, loadConfig, STORAGE_KEYS } from '../config/index.js';
+import { showError } from './browser.js';
 
 class ControlPanelManager {
     constructor() {
@@ -45,24 +46,33 @@ class ControlPanelManager {
      */
     initializeControls() {
         // Find the existing minimize button
-        this.minimizeButton = this.panel.querySelector('.minimize-btn-dark');
+        this.minimizeButton = this.panel.querySelector('#minimize-btn-dark');
+        this.hideButton = this.panel.querySelector('#hide-btn-dark');
 
-        if (!this.minimizeButton) {
-            console.error('Minimize button not found');
+        if (!this.minimizeButton || !this.hideButton) {
+            console.error('Control buttons not found');
             return;
         }
-
-
 
         // Set initial state if not minimized from saved state
         this.minimizeButton.innerHTML = '−';
         this.minimizeButton.title = 'Minimize';
         this.minimizeButton.setAttribute('aria-label', 'Minimize control panel');
 
-        // Add click handler
+        // Set hide button properties
+        this.hideButton.innerHTML = '×';
+        this.hideButton.title = 'Hide';
+        this.hideButton.setAttribute('aria-label', 'Hide control panel');
+
+        // Add click handlers
         this.minimizeButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggleMinimize();
+        });
+
+        this.hideButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleHide();
         });
     }
 
@@ -216,7 +226,6 @@ class ControlPanelManager {
      * Initialize panel position and state
      */
     initializePosition() {
-
         // Apply saved state if available
         if (this.savedState) {
             const { isMinimized, position } = this.savedState;
@@ -243,11 +252,18 @@ class ControlPanelManager {
             }
 
             // Apply minimized state if needed
-            if (isMinimized)
+            if (isMinimized) {
                 this.minimize();
-
+            }
         }
+    }
 
+    /**
+     * Hide the control panel and show an error message
+     */
+    toggleHide() {
+        this.panel.style.display = 'none';
+        showError('Control panel hidden. Please refresh the page to restore it.');
     }
 
 }
