@@ -27,7 +27,7 @@
 
             <div class="modal-content-dark">
 
-                <div class="control-group">
+                <div class="control-group" style="text-align: center;">
                     <button id="regenerateCanvas" class="regenerate-btn">Regenerate Canvas</button>
                 </div>
 
@@ -40,6 +40,12 @@
                     <label for="animationSpeed">Animation Speed: <span id="speedValue">1.0</span>x</label>
                     <input type="range" id="animationSpeed" min="0.1" max="3" value="1.0" step="0.1">
                 </div>
+
+                <div class="control-group">
+                    <label for="trailFadeSpeed">Trail Fade Speed: <span id="trailFadeSpeedValue">0.2</span></label>
+                    <input type="range" id="trailFadeSpeed" min="0.01" max="0.3" value="0.2" step="0.01">
+                </div>
+
                 <div class="control-group">
                     <label class="toggle-container">
                         <input type="checkbox" id="enableMouseConnections">
@@ -50,12 +56,9 @@
                 <div id="connectionControls" class="control-group-block">
                     <label for="connectionDistance">Connection Distance: <span id="distanceValue">100</span></label>
                     <input type="range" id="connectionDistance" min="150" max="500" value="100" step="20">
-                    
                     <div style="margin-top: 10px;">
                         <label>Connection Color:</label>
-
                         <div style="display: flex; align-items: center; gap: 10px;">
-
                             <div>
                                 <label for="connectionColorStart">Start</label>   
                                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -70,16 +73,30 @@
                                     <span id="connectionColorEndValue">End</span>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-                    
                     <div style="margin-top: 10px;">
                         <label for="connectionOpacity">Connection Opacity: <span id="connectionOpacityValue">20</span>%</label>
                         <input type="range" id="connectionOpacity" min="5" max="100" value="20" step="5">
                     </div>
                 </div>
-                
+
+                <div class="control-group">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="enableShootingStars">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Shooting Stars</span>
+                    </label>
+                </div>
+                <div id="shootingStarControls" class="control-group-block">
+                    <label for="maxStarsAtOnce">Max Stars at Once: <span id="maxStarsAtOnceValue">3</span></label>
+                    <input type="range" id="maxStarsAtOnce" min="1" max="10" value="3" step="1">
+                    <label for="maxShootDuration">Max Shoot Duration (s): <span id="maxShootDurationValue">3</span>s</label>
+                    <input type="range" id="maxShootDuration" min="1" max="10" value="3" step="0.5">
+                    <label for="maxEventSeconds">Star Frequency (s): <span id="maxEventSecondsValue">0.5</span>s</label>
+                    <input type="range" id="maxEventSeconds" min="0.1" max="1.0" value="0.1" step="0.1">
+                </div>
+
                 <div class="control-group">
                     <label class="toggle-container">
                         <input type="checkbox" id="enableClusters">
@@ -92,11 +109,6 @@
                     <input type="range" id="maxStarsPerCluster" min="5" max="100" value="25" step="5">
                     <label for="clusterCount">Number of Clusters: <span id="clusterCountValue">5</span></label>
                     <input type="range" id="clusterCount" min="1" max="10" value="5" step="1">
-                </div>
-                
-                <div class="control-group">
-                    <label for="trailFadeSpeed">Trail Fade Speed: <span id="trailFadeSpeedValue">0.2</span></label>
-                    <input type="range" id="trailFadeSpeed" min="0.01" max="0.3" value="0.2" step="0.01">
                 </div>
     
                 <div class="control-group">
@@ -118,22 +130,12 @@
                 </div>
     
                 <div class="control-group">
-                    <label for="bgColor">Background Color: <span id="bgColorValue">#000428</span></label>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                        <input type="color" id="bgColor" value="#000428" style="width: 50px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
-                        <input type="range" id="bgOpacity" min="0" max="100" value="100" style="flex: 1;">
-                        <span id="opacityValue" style="font-size: 0.8em; min-width: 30px; text-align: right;">100%</span>
-                    </div>
-                </div>
-    
-                <div class="control-group">
                     <label class="toggle-container">
                         <input type="checkbox" id="parallaxEnabled">
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">Parallax Effect</span>
                     </label>
                 </div>
-                
                 <div id="parallaxControls" class="control-group-block">
                     <label for="parallaxIntensity">Parallax Intensity: <span id="parallaxIntensityValue">0.2</span></label>
                     <input type="range" id="parallaxIntensity" min="0" max="1" value="0.2" step="0.05">
@@ -142,6 +144,15 @@
                     <input type="range" id="parallaxMaxOffset" min="20" max="200" value="100" step="5">
                 </div>
 
+                <div class="control-group">
+                    <label for="bgColor">Background Color: <span id="bgColorValue">#000428</span></label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                        <input type="color" id="bgColor" value="#000428" style="width: 50px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
+                        <input type="range" id="bgOpacity" min="0" max="100" value="100" style="flex: 1;">
+                        <span id="opacityValue" style="font-size: 0.8em; min-width: 30px; text-align: right;">100%</span>
+                    </div>
+                </div>
+    
               </div>
 
         </div>

@@ -36,6 +36,14 @@ const DEFAULT_CONFIG = {
         distance: 250
     },
 
+    // Shooting stars configuration
+    shootingStar: {
+        enabled: false,
+        maxStarsAtOnce: 3,
+        maxShootDurationSeconds: 3,
+        maxEventSeconds: 0.5
+    },
+
     // Star movement settings
     starMoving: {
         enabled: false,

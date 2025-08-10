@@ -183,17 +183,13 @@ function initUIControls() {
 
     // Initialize shooting stars settings with safe defaults if not present
     if (!CONFIG.shootingStar) {
-        CONFIG.shootingStar = {
-            enabled: false,
-            maxStarsAtOnce: 3,
-            maxShootDurationSeconds: 3,
-            maxEventSeconds: 0.5
+        CONFIG.shootingStar = { 
+            enabled: false, 
+            maxStarsAtOnce: 3, 
+            maxShootDurationSeconds: 3, 
+            maxEventSeconds: 6 
         };
     }
-    if (starfield) {
-        starfield.updateShootingStarSettings(CONFIG.shootingStar);
-    }
-
     if (maxStarsAtOnceInput) {
         maxStarsAtOnceInput.value = CONFIG.shootingStar.maxStarsAtOnce;
         document.getElementById('maxStarsAtOnceValue').textContent = CONFIG.shootingStar.maxStarsAtOnce;
@@ -391,7 +387,7 @@ function initUIControls() {
             document.getElementById('connectionOpacityValue').textContent = `${e.target.value}`;
 
             if (starfield) {
-
+                
                 starfield.setConnectionOpacity(opacity);
             }
             saveConfig(CONFIG);
@@ -531,7 +527,7 @@ function initUIControls() {
             const isEnabled = e.target.checked;
             CONFIG.shootingStar.enabled = isEnabled;
             shootingStarsControls.style.display = isEnabled ? 'block' : 'none';
-
+            
             // Update starfield with new settings
             if (starfield && typeof starfield.updateShootingStarSettings === 'function') {
                 starfield.updateShootingStarSettings({
@@ -550,7 +546,7 @@ function initUIControls() {
                 const value = parseInt(e.target.value);
                 CONFIG.shootingStar.maxStarsAtOnce = value;
                 document.getElementById('maxStarsAtOnceValue').textContent = value;
-
+                
                 if (starfield && typeof starfield.updateShootingStarSettings === 'function') {
                     starfield.updateShootingStarSettings({
                         maxStarsAtOnce: value
@@ -566,10 +562,10 @@ function initUIControls() {
             document.getElementById('maxShootDurationValue').textContent = CONFIG.shootingStar.maxShootDurationSeconds || 3;
 
             maxShootDurationInput.addEventListener('input', (e) => {
-                const value = parseInt(e.target.value);
+                const value = parseFloat(e.target.value);
                 CONFIG.shootingStar.maxShootDurationSeconds = value;
                 document.getElementById('maxShootDurationValue').textContent = value;
-
+                
                 if (starfield && typeof starfield.updateShootingStarSettings === 'function') {
                     starfield.updateShootingStarSettings({
                         maxShootDurationSeconds: value
@@ -585,10 +581,10 @@ function initUIControls() {
             document.getElementById('maxEventSecondsValue').textContent = CONFIG.shootingStar.maxEventSeconds || 6;
 
             maxEventSecondsInput.addEventListener('input', (e) => {
-                const value = e.target.value;
+                const value = parseInt(e.target.value);
                 CONFIG.shootingStar.maxEventSeconds = value;
                 document.getElementById('maxEventSecondsValue').textContent = value;
-
+                
                 if (starfield && typeof starfield.updateShootingStarSettings === 'function') {
                     starfield.updateShootingStarSettings({
                         maxEventSeconds: value
@@ -671,7 +667,7 @@ function initUIControls() {
             }
             CONFIG.clusters.clusterCount = parseInt(e.target.value);
             document.getElementById('clusterCountValue').textContent = CONFIG.clusters.clusterCount;
-            saveConfig(CONFIG);
+                saveConfig(CONFIG);
             if (starfield) {
                 starfield.options.clusterCount = CONFIG.clusters.clusterCount;
                 starfield.createStars();

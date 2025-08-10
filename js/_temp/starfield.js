@@ -48,6 +48,14 @@ class Starfield {
         // State
         this.stars = [];
         this.mouse = { x: 0, y: 0 };
+        
+        // Initialize shooting star settings
+        this.shootingStarSettings = {
+            enabled: options.shootingStar?.enabled || false,
+            maxStarsAtOnce: options.shootingStar?.maxStarsAtOnce || 3,
+            maxShootDuration: (options.shootingStar?.maxShootDurationSeconds || 3) * 1000, // Convert to ms
+            maxEventSeconds: options.shootingStar?.maxEventSeconds || 6
+        };
         this.animationId = null;
         this.lastTime = 0;
         this.fps = 0;
@@ -68,15 +76,6 @@ class Starfield {
         this.centerX = this.canvas.width / 2;
         this.centerY = this.canvas.height / 2;
 
-
-        // Initialize shooting star settings
-        this.shootingStarSettings = {
-            enabled: options.shootingStar?.enabled || false,
-            maxStarsAtOnce: options.shootingStar?.maxStarsAtOnce || 3,
-            maxShootDurationSeconds: (options.shootingStar?.maxShootDurationSeconds || 3),
-            maxEventSeconds: (options.shootingStar?.maxEventSeconds || 6)
-        };
-
         // Initialize
         this.init();
     }
@@ -91,14 +90,8 @@ class Starfield {
         this.resize();
 
         // Update shooting star settings and pass to Star class
-        this.updateShootingStarSettings(this.shootingStarSettings);
-
-        // Create stars
-        this.createStars();
-
-        // Setup event listeners
-        this.setupEventListeners();
-
+        Star.updateShootingStarSettings(this.shootingStarSettings);
+        
         // Initialize FPS counter
         this.fpsCounter = Utils.fpsCounter();
 
@@ -253,17 +246,8 @@ class Starfield {
         const { width, height } = this.canvas;
 
         // Clear existing stars
-        this.stars.forEach(star => {
-            if (star.dispose && typeof star.dispose === 'function') {
-                star.dispose();
-            }
-        });
+        this.stars.forEach(star => star.dispose());
         this.stars = [];
-
-        // Reset shooting star state
-        if (typeof Star.resetShootingStarState === 'function') {
-            Star.resetShootingStarState();
-        }
 
         // Get configuration values from main.js or use defaults
         const starMovementSpeed = this.options.starMovementSpeed !== undefined ? this.options.starMovementSpeed : 0.5;
@@ -499,35 +483,6 @@ class Starfield {
         }
     }
 
-
-
-    /**
-     * Update shooting star settings
-     * @param {Object} settings - New settings for shooting stars
-     * @param {boolean} [settings.enabled] - Whether shooting stars are enabled
-     * @param {number} [settings.maxStarsAtOnce] - Maximum number of shooting stars at once
-     * @param {number} [settings.maxShootDuration] - Maximum duration of shooting star in ms
-     * @param {number} [settings.maxShootDurationSeconds] - Maximum duration of shooting star in seconds (alternative to maxShootDuration)
-     * @param {number} [settings.maxEventSeconds] - Maximum delay between shooting stars in seconds
-     * @returns {void}
-     */
-    updateShootingStarSettings(settings) {
-        if (settings) {
-            this.shootingStarSettings = {
-                ...this.shootingStarSettings,
-                ...settings
-            };
-
-            // console.log('Updating shooting star settings:', this.shootingStarSettings);
-
-            // Update Star class with new settings
-            if (typeof Star.updateShootingStarSettings === 'function') {
-                Star.updateShootingStarSettings(this.shootingStarSettings);
-            }
-        }
-    }
-
-
     /**
      * Main animation loop that updates and renders the starfield.
      * @param {number} [time=0] - Current timestamp in milliseconds
@@ -622,11 +577,11 @@ class Starfield {
 
                     // Create gradient for this connection
                     const gradient = ctx.createLinearGradient(star.x, star.y, this.mouse.x, this.mouse.y);
-
+                    
                     // Apply opacity to the colors in the gradient
                     const startColorWithOpacity = this._applyOpacityToColor(startColor, opacity);
                     const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 0.8);
-
+                    
                     gradient.addColorStop(0, startColorWithOpacity);
                     gradient.addColorStop(1, endColorWithOpacity);
 
@@ -848,6 +803,236 @@ class Starfield {
         this.stars = [];
         this.mouse = null;
         this.animationId = null;
+    }
+
+    /**
+     * Apply opacity to a CSS color string
+     * @param {string} color - CSS color string (hex, rgb, or rgba)
+     * @param {number} opacity - Opacity value (0-1)
+     * @returns {string} Color string with applied opacity
+     * @private
+     */
+    _applyOpacityToColor(color, opacity) {
+        // If the color is already rgba, update the alpha channel
+        if (color.startsWith('rgba')) {
+            return color.replace(/[\d.]+(?=\s*\)$)/, opacity);
+        }
+        // If the color is rgb, convert to rgba with the new opacity
+        else if (color.startsWith('rgb')) {
+            return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+        }
+        // If it's a hex color, convert to rgba
+        else if (color.startsWith('#')) {
+            // Convert hex to RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        // Return as is if format is not recognized
+        return color;
+    }
+
+    /**
+     * Update performance statistics (FPS, connection count).
+     * @private
+     * @returns {void}
+     */
+    updateStats() {
+        const fpsEl = document.getElementById('fps');
+        const starsEl = document.getElementById('stars');
+        const connectionsEl = document.getElementById('connections');
+
+        if (fpsEl) fpsEl.textContent = this.fps;
+        if (starsEl) starsEl.textContent = this.stars.length;
+        if (connectionsEl) connectionsEl.textContent = this.visibleConnections;
+    }
+
+/**
+ * Set up event listeners for mouse movement and window resizing.
+ * @private
+ * @returns {void}
+ */
+setupEventListeners() {
+// Update center points
+this.centerX = this.canvas.width / 2;
+this.centerY = this.canvas.height / 2;
+
+// Mouse movement with throttling for better performance
+let lastMove = 0;
+const throttleDelay = 16; // ~60fps
+
+const handleMouseMove = (e) => {
+const now = performance.now();
+if (now - lastMove < throttleDelay) return;
+lastMove = now;
+
+const rect = this.canvas.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+
+// Calculate normalized mouse position (-1 to 1)
+this.mouse = {
+x: x,
+y: y,
+normX: (x / this.canvas.width - 0.5) * 2,
+normY: (y / this.canvas.height - 0.5) * 2
+};
+
+// Parallax positions will be updated in the next animation frame
+};
+
+// Mouse move
+this.canvas.addEventListener('mousemove', handleMouseMove);
+
+// Touch support
+this.canvas.addEventListener('touchmove', (e) => {
+e.preventDefault();
+if (e.touches.length > 0) {
+const touch = e.touches[0];
+const mouseEvent = new MouseEvent('mousemove', {
+clientX: touch.clientX,
+clientY: touch.clientY
+});
+handleMouseMove(mouseEvent);
+}
+}, { passive: false });
+
+// Mouse/touch leave
+const handleLeave = () => {
+// Smoothly return stars to original position
+this.stars.forEach(star => {
+star.parallaxX = 0;
+star.parallaxY = 0;
+});
+this.mouse = null;
+};
+
+this.canvas.addEventListener('mouseleave', handleLeave);
+this.canvas.addEventListener('touchend', handleLeave);
+this.canvas.addEventListener('touchcancel', handleLeave);
+
+// Window resize
+window.addEventListener('resize', () => {
+this.resize();
+});
+
+}
+
+/**
+ * Handle window resize events and update canvas dimensions.
+ * @returns {void}
+ */
+resize() {
+const { canvas } = this;
+const { innerWidth: width, innerHeight: height } = window;
+
+// Set display size (css pixels)
+canvas.style.width = `${width}px`;
+canvas.style.height = `${height}px`;
+
+// Set actual size in memory (scaled to account for extra pixel density)
+const scale = window.devicePixelRatio;
+canvas.width = Math.floor(width * scale);
+canvas.height = Math.floor(height * scale);
+
+// Normalize coordinate system to use css pixels
+this.ctx.scale(scale, scale);
+
+// Update star positions if needed
+if (this.stars.length > 0) {
+const scaleX = width / this.canvas.width;
+const scaleY = height / this.canvas.height;
+
+this.stars.forEach(star => {
+star.originX *= scaleX;
+star.originY *= scaleY;
+star.x = star.originX + (Math.random() * 2 - 1) * 20; // Slight random offset
+star.y = star.originY + (Math.random() * 2 - 1) * 20;
+});
+}
+}
+
+/**
+ * Pause the animation loop while maintaining the current state.
+ * @returns {void}
+ */
+pause() {
+if (this.animationId) {
+cancelAnimationFrame(this.animationId);
+this.animationId = null;
+this._isPaused = true;
+}
+}
+
+/**
+ * Resume the animation loop if it was paused.
+ * @returns {void}
+ */
+resume() {
+if (this._isPaused) {
+this._isPaused = false;
+this.lastTime = performance.now(); // Reset last time to prevent large delta on resume
+this.animate();
+}
+}
+
+/**
+ * Clean up resources and stop animations.
+ * Should be called when the starfield is no longer needed.
+ * @returns {void}
+ */
+dispose() {
+// Pause the animation first
+this.pause();
+
+// Clean up event listeners
+if (this._handleResize) {
+window.removeEventListener('resize', this._handleResize);
+}
+if (this._handleMouseMove) {
+this.canvas.removeEventListener('mousemove', this._handleMouseMove);
+}
+if (this._handleLeave) {
+this.canvas.removeEventListener('mouseleave', this._handleLeave);
+}
+
+// Clear the canvas
+this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+// Clear references
+this.stars = [];
+this.mouse = null;
+this.animationId = null;
+}
+
+    /**
+     * Update shooting star settings
+     * @param {Object} settings - New settings for shooting stars
+     * @param {boolean} [settings.enabled] - Whether shooting stars are enabled
+     * @param {number} [settings.maxStarsAtOnce] - Maximum number of shooting stars at once
+     * @param {number} [settings.maxShootDuration] - Maximum duration of shooting star in ms
+     * @param {number} [settings.maxShootDurationSeconds] - Maximum duration of shooting star in seconds (alternative to maxShootDuration)
+     * @param {number} [settings.maxEventSeconds] - Maximum delay between shooting stars in seconds
+     * @returns {void}
+     */
+    updateShootingStarSettings(settings) {
+        if (settings) {
+            this.shootingStarSettings = {
+                ...this.shootingStarSettings,
+                ...settings,
+                // Convert seconds to milliseconds for maxShootDuration if needed
+                maxShootDuration: settings.maxShootDurationSeconds 
+                    ? settings.maxShootDurationSeconds * 1000 
+                    : (settings.maxShootDuration || this.shootingStarSettings.maxShootDuration)
+            };
+
+            // Update Star class with new settings
+            if (typeof Star.updateShootingStarSettings === 'function') {
+                Star.updateShootingStarSettings(this.shootingStarSettings);
+            }
+        }
     }
 }
 

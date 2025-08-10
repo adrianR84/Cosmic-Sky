@@ -83,19 +83,22 @@ class Star {
          * @property {number} shootingStarsCount - Number of currently active shooting stars
          * @property {number} lastShootingStarTime - Timestamp when the last shooting star started
          * @property {number} nextShootingStarDelay - Delay before the next shooting star can start
+         * @property {Object} settings - Current shooting star settings from Starfield
+         * @property {boolean} settings.enabled - Whether shooting stars are enabled
+         * @property {number} settings.maxStarsAtOnce - Maximum number of shooting stars that can be active at once
+         * @property {number} settings.maxShootDuration - Maximum duration of a shooting star animation in ms
+         * @property {number} settings.maxEventSeconds - Maximum delay between shooting star events in seconds
          */
         if (typeof Star.shootingStarsCount === 'undefined') {
             Star.shootingStarsCount = 0;
             Star.lastShootingStarTime = 0;
             Star.nextShootingStarDelay = 0;
-
             Star.settings = {
-                enabled: false,
+                enabled: true,
                 maxStarsAtOnce: 3,
-                maxShootDurationSeconds: 3, // 3 seconds 
-                maxEventSeconds: 6      // 6 seconds
+                maxShootDuration: 3000, // 3 seconds in ms
+                maxEventSeconds: 6      // 6 seconds in seconds
             };
-
         }
 
         // Current state
@@ -157,38 +160,6 @@ class Star {
         this.initAnimations();
     }
 
-
-    /**
-     * Updates the shooting star settings used by all Star instances
-     * @static
-     * @param {Object} settings - New shooting star settings
-     * @param {boolean} settings.enabled - Whether shooting stars are enabled
-     * @param {number} settings.maxStarsAtOnce - Maximum number of shooting stars that can be active at once
-     * @param {number} settings.maxShootDuration - Maximum duration of a shooting star animation in ms
-     * @param {number} settings.maxEventSeconds - Maximum delay between shooting star events in seconds
-     */
-    static updateShootingStarSettings(settings) {
-        if (settings) {
-            Star.settings = {
-                enabled: settings.enabled !== undefined ? settings.enabled : Star.settings.enabled,
-                maxStarsAtOnce: settings.maxStarsAtOnce || Star.settings.maxStarsAtOnce,
-                maxShootDurationSeconds: settings.maxShootDurationSeconds || Star.settings.maxShootDurationSeconds,
-                maxEventSeconds: settings.maxEventSeconds || Star.settings.maxEventSeconds
-            };
-            // console.log('Shooting star settings updated:', Star.settings);
-        }
-    }
-
-    /**
-     * Reset the shooting star state
-     * @static
-     */
-    static resetShootingStarState() {
-        Star.shootingStarsCount = 0;
-        Star.lastShootingStarTime = 0;
-        Star.nextShootingStarDelay = 0;
-    }
-
     /**
      * Starts a shooting star animation from the star's current position.
      * A shooting star will move rapidly in a straight line with a glowing tail effect.
@@ -203,8 +174,34 @@ class Star {
      *     console.log('Shooting star started!');
      * }
      */
-    startShooting(time) {
+    /**
+     * Updates the shooting star settings used by all Star instances
+     * @static
+     * @param {Object} settings - New shooting star settings
+     * @param {boolean} settings.enabled - Whether shooting stars are enabled
+     * @param {number} settings.maxStarsAtOnce - Maximum number of shooting stars that can be active at once
+     * @param {number} settings.maxShootDuration - Maximum duration of a shooting star animation in ms
+     * @param {number} settings.maxEventSeconds - Maximum delay between shooting star events in seconds
+     */
+    static updateShootingStarSettings(settings) {
+        if (settings) {
+            Star.settings = {
+                enabled: settings.enabled !== undefined ? settings.enabled : Star.settings.enabled,
+                maxStarsAtOnce: settings.maxStarsAtOnce || Star.settings.maxStarsAtOnce,
+                maxShootDuration: settings.maxShootDuration || Star.settings.maxShootDuration,
+                maxEventSeconds: settings.maxEventSeconds || Star.settings.maxEventSeconds
+            };
+        }
+    }
 
+    /**
+     * Starts a shooting star animation from the star's current position.
+     * A shooting star will move rapidly in a straight line with a glowing tail effect.
+     * 
+     * @param {number} time - Current timestamp in milliseconds for animation timing
+     * @returns {boolean} True if shooting star was successfully started, false if conditions weren't met
+     */
+    startShooting(time) {
         // Don't start if shooting stars are disabled
         if (!Star.settings.enabled) {
             return false;
@@ -220,23 +217,22 @@ class Star {
         this.isShooting = true;
         Star.shootingStarsCount++;
         this.shootStartTime = time;
-        this.shootDuration = 1000 + Math.random() * Star.settings.maxShootDurationSeconds * 1000;
+        
+        // Use settings for duration and delay calculations
+        const maxDurationMs = Star.settings.maxShootDuration;
+        const minDurationMs = Math.max(1000, maxDurationMs * 0.3); // At least 1s, or 30% of max duration
+        
+        this.shootDuration = minDurationMs + Math.random() * (maxDurationMs - minDurationMs);
         this.shootStartX = this.x;
         this.shootStartY = this.y;
         this.shootAngle = Math.random() * Math.PI * 2; // Random direction in radians
-        this.shootDistance = 800 + Math.random() * 1000; // 800-1800px distance
-
-        // Schedule next shooting star with some randomness
-        // Star.lastShootingStarTime = time;
-        // Star.nextShootingStarDelay = 2000 + Math.random() * Star.settings.maxEventSeconds;
+        this.shootDistance = 500 + Math.random() * 1000; // 500-1500px distance
 
         // Schedule next shooting star with some randomness
         Star.lastShootingStarTime = time;
-        const minDelayMs = 100; // Minimum 0.1 seconds between stars
-        const maxDelayMs = Star.settings.maxEventSeconds * 1000;
+        const minDelayMs = 2000; // Minimum 2 seconds between stars
+        const maxDelayMs = Star.settings.maxEventSeconds * 1000; // Convert seconds to ms
         Star.nextShootingStarDelay = minDelayMs + Math.random() * (maxDelayMs - minDelayMs);
-
-        console.log(Star.shootingStarsCount, Star.settings.maxStarsAtOnce, Star.nextShootingStarDelay);
 
         return true;
     }
@@ -361,9 +357,7 @@ class Star {
         this.updateBlinkingEffect(time);
 
         // Handle shooting star behavior
-
-        // if (this.isShooting) {
-        if (Star.settings.enabled && this.isShooting) {
+        if (this.isShooting) {
             const shootProgress = (time - this.shootStartTime) / this.shootDuration;
             if (shootProgress >= 1) {
                 // Reset after shooting
@@ -386,15 +380,14 @@ class Star {
 
                 return; // Skip other updates while shooting
             }
-        } else if (Star.settings.enabled && !this.isShooting &&
-            Star.shootingStarsCount < Star.settings.maxStarsAtOnce &&
+        } else if (!this.isBlinking && !this.isShooting &&
+            Star.shootingStarsCount < 3 &&
             (!Star.lastShootingStarTime || time - Star.lastShootingStarTime > Star.nextShootingStarDelay)) {
             // Only start shooting if:
             // 1. Not currently blinking
             // 2. Fewer than 3 stars are shooting
             // 3. Enough time has passed since the last shooting star
             this.startShooting(time);
-            // console.log(Star.settings);
             return;
         }
 
@@ -480,24 +473,24 @@ class Star {
      */
     draw(ctx) {
         if (!ctx) return;
-
+        
         // Calculate final position with parallax offset
         const drawX = this.x + (this.parallaxX || 0);
         const drawY = this.y + (this.parallaxY || 0);
         const gradientRadius = this.currentSize * 1.5;
-
+        
         // Validate position values to prevent rendering errors
         if (!Number.isFinite(drawX) || !Number.isFinite(drawY) || !Number.isFinite(gradientRadius)) {
-            console.warn('Skipping star draw due to invalid position values', {
-                x: this.x,
-                y: this.y,
-                parallaxX: this.parallaxX,
-                parallaxY: this.parallaxY,
-                currentSize: this.currentSize
+            console.warn('Skipping star draw due to invalid position values', { 
+                x: this.x, 
+                y: this.y, 
+                parallaxX: this.parallaxX, 
+                parallaxY: this.parallaxY, 
+                currentSize: this.currentSize 
             });
             return;
         }
-
+        
         try {
             // Create main star gradient (center is brighter, edges fade to transparent)
             const gradient = ctx.createRadialGradient(
@@ -507,7 +500,7 @@ class Star {
             gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 95%, ${this.alpha})`);
             gradient.addColorStop(0.7, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.alpha * 0.5})`);
             gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
-
+            
             // Draw the main star body
             ctx.beginPath();
             ctx.arc(drawX, drawY, this.currentSize, 0, Math.PI * 2);
