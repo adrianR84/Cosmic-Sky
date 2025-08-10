@@ -95,9 +95,16 @@ function init() {
         // Default options for the starfield
         const starfieldOptions = {
             starCount: CONFIG.starCount,
+
             connectionDistance: CONFIG.mouseConnection.distance,
             mouseConnectionsEnabled: CONFIG.mouseConnection.enabled,
+
             moveStarsAwayFromMouse: CONFIG.moveStarsAwayFromMouse !== undefined ? CONFIG.moveStarsAwayFromMouse : false,
+
+            clustersEnabled: CONFIG.clusters.enabled,
+            maxStarsPerCluster: CONFIG.clusters.maxStarsPerCluster,
+            clusterCount: CONFIG.clusters.clusterCount,
+
             starColor: {
                 hue: Utils.randomInRange(CONFIG.colors.starHueMin, CONFIG.colors.starHueMax),
                 saturation: CONFIG.colors.starSaturation,
@@ -226,14 +233,23 @@ function initUIControls() {
         }
     }
 
+    // Initialize clusters object if it doesn't exist
+    if (!CONFIG.clusters) {
+        CONFIG.clusters = {
+            enabled: true,
+            maxStarsPerCluster: 100,
+            clusterCount: 5
+        };
+    }
+
     if (maxStarsPerClusterInput) {
-        maxStarsPerClusterInput.value = CONFIG.maxStarsPerCluster;
-        document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.maxStarsPerCluster;
+        maxStarsPerClusterInput.value = CONFIG.clusters.maxStarsPerCluster;
+        document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.clusters.maxStarsPerCluster;
     }
 
     if (clusterCountInput) {
-        clusterCountInput.value = CONFIG.clusterCount;
-        document.getElementById('clusterCountValue').textContent = CONFIG.clusterCount;
+        clusterCountInput.value = CONFIG.clusters.clusterCount;
+        document.getElementById('clusterCountValue').textContent = CONFIG.clusters.clusterCount;
     }
 
     if (trailFadeSpeedInput) {
@@ -279,7 +295,8 @@ function initUIControls() {
                 connectionControls.style.display = CONFIG.mouseConnection.enabled ? 'block' : 'none';
             }
             if (starfield) {
-                starfield.setMouseConnectionsEnabled(CONFIG.mouseConnection.enabled);
+                starfield.mouseConnectionsEnabled = CONFIG.mouseConnection.enabled;
+                starfield.createStars();
             }
             saveConfig(CONFIG);
         });
@@ -322,7 +339,10 @@ function initUIControls() {
             CONFIG.starCount = parseInt(e.target.value);
             document.getElementById('starCountValue').textContent = CONFIG.starCount;
             saveConfig(CONFIG);
-            init(); // Reinitialize with new star count
+            if (starfield) {
+                starfield.options.starCount = CONFIG.starCount;
+                starfield.createStars();
+            }
         });
     }
 
@@ -404,25 +424,74 @@ function initUIControls() {
     const clusterControls = document.getElementById('clusterControls');
 
     if (enableClustersToggle && clusterControls) {
+        // Ensure clusters object exists
+        if (!CONFIG.clusters) {
+            CONFIG.clusters = {
+                enabled: true,
+                maxStarsPerCluster: 100,
+                clusterCount: 5
+            };
+        }
+
         // Set initial state from config (default to true if not set)
-        enableClustersToggle.checked = CONFIG.clusterEnabled !== false;
+        enableClustersToggle.checked = CONFIG.clusters.enabled !== false;
         clusterControls.style.display = enableClustersToggle.checked ? 'block' : 'none';
 
         // Add event listener for toggle
         enableClustersToggle.addEventListener('change', (e) => {
             const isEnabled = e.target.checked;
-            CONFIG.clusterEnabled = isEnabled;
+            CONFIG.clusters.enabled = isEnabled;
             clusterControls.style.display = isEnabled ? 'block' : 'none';
 
             // Reinitialize the starfield to apply the clustering change
             if (starfield) {
                 // Update the starfield's options
-                starfield.options.clusterEnabled = isEnabled;
+                if (starfield.options) {
+                    starfield.options.clustersEnabled = isEnabled;
+                }
                 // Recreate the stars with the new clustering setting
-                starfield.createStars();
+                if (typeof starfield.createStars === 'function') {
+                    starfield.createStars();
+                }
             }
-
             saveConfig(CONFIG);
+
+        });
+    }
+
+    if (maxStarsPerClusterInput) {
+        maxStarsPerClusterInput.addEventListener('input', (e) => {
+            // Ensure clusters object exists
+            if (!CONFIG.clusters) {
+                CONFIG.clusters = {
+                    enabled: true,
+                    maxStarsPerCluster: 100,
+                    clusterCount: 5
+                };
+            }
+            CONFIG.clusters.maxStarsPerCluster = parseInt(e.target.value);
+            document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.clusters.maxStarsPerCluster;
+            saveConfig(CONFIG);
+            // Reinitialize to apply the new max stars per cluster
+            // init();
+        });
+    }
+
+    if (clusterCountInput) {
+        clusterCountInput.addEventListener('input', (e) => {
+            // Ensure clusters object exists
+            if (!CONFIG.clusters) {
+                CONFIG.clusters = {
+                    enabled: true,
+                    maxStarsPerCluster: 100,
+                    clusterCount: 5
+                };
+            }
+            CONFIG.clusters.clusterCount = parseInt(e.target.value);
+            document.getElementById('clusterCountValue').textContent = CONFIG.clusters.clusterCount;
+            saveConfig(CONFIG);
+            // Reinitialize to apply the new cluster count
+            // init();
         });
     }
 
@@ -452,25 +521,6 @@ function initUIControls() {
         });
     }
 
-    if (maxStarsPerClusterInput) {
-        maxStarsPerClusterInput.addEventListener('input', (e) => {
-            CONFIG.maxStarsPerCluster = parseInt(e.target.value);
-            document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.maxStarsPerCluster;
-            saveConfig(CONFIG);
-            // Reinitialize to apply the new max stars per cluster
-            init();
-        });
-    }
-
-    if (clusterCountInput) {
-        clusterCountInput.addEventListener('input', (e) => {
-            CONFIG.clusterCount = parseInt(e.target.value);
-            document.getElementById('clusterCountValue').textContent = CONFIG.clusterCount;
-            saveConfig(CONFIG);
-            // Reinitialize to apply the new cluster count
-            init();
-        });
-    }
 
     if (trailFadeSpeedInput) {
         trailFadeSpeedInput.addEventListener('input', (e) => {

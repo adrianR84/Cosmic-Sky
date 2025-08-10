@@ -153,14 +153,6 @@ class Starfield {
     }
 
     /**
-     * Enable or disable mouse connections to nearby stars
-     * @param {boolean} enabled - Whether mouse connections are enabled
-     */
-    setMouseConnectionsEnabled(enabled) {
-        this.mouseConnectionsEnabled = enabled;
-    }
-
-    /**
      * Set the star movement speed multiplier
      * @param {number} speed - Speed multiplier (0.0 to 2.0)
      */
@@ -258,7 +250,7 @@ class Starfield {
         // Create clustered or distributed stars based on clusterEnabled flag
         let remainingStars = starCount;
 
-        if (this.options.clusterEnabled !== false) {
+        if (this.options.clustersEnabled !== false) {
             // Only create clusters if clustering is enabled
             const clusteredStars = Math.floor(starCount * 0.2);
             const starsPerCluster = Math.min(Math.floor(clusteredStars / clusterCount), maxStarsPerCluster);
@@ -319,174 +311,6 @@ class Starfield {
         // Sort by z-index for proper layering
         this.stars.sort((a, b) => a.zIndex - b.zIndex);
     }
-
-    /**
-     * Set up event listeners for mouse movement and window resizing.
-     * @private
-     * @returns {void}
-     */
-    setupEventListeners() {
-        // Update center points
-        this.centerX = this.canvas.width / 2;
-        this.centerY = this.canvas.height / 2;
-
-        // Mouse movement with throttling for better performance
-        let lastMove = 0;
-        const throttleDelay = 16; // ~60fps
-
-        const handleMouseMove = (e) => {
-            const now = performance.now();
-            if (now - lastMove < throttleDelay) return;
-            lastMove = now;
-
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // Calculate normalized mouse position (-1 to 1)
-            this.mouse = {
-                x: x,
-                y: y,
-                normX: (x / this.canvas.width - 0.5) * 2,
-                normY: (y / this.canvas.height - 0.5) * 2
-            };
-
-            // Parallax positions will be updated in the next animation frame
-        };
-
-        // Mouse move
-        this.canvas.addEventListener('mousemove', handleMouseMove);
-
-        // Touch support
-        this.canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                handleMouseMove(mouseEvent);
-            }
-        }, { passive: false });
-
-        // Mouse/touch leave
-        const handleLeave = () => {
-            // Smoothly return stars to original position
-            this.stars.forEach(star => {
-                star.parallaxX = 0;
-                star.parallaxY = 0;
-            });
-            this.mouse = null;
-        };
-
-        this.canvas.addEventListener('mouseleave', handleLeave);
-        this.canvas.addEventListener('touchend', handleLeave);
-        this.canvas.addEventListener('touchcancel', handleLeave);
-
-        // Window resize
-        window.addEventListener('resize', () => {
-            this.resize();
-        });
-
-        // UI Controls
-        const starCountInput = document.getElementById('starCount');
-        const distanceInput = document.getElementById('connectionDistance');
-        const speedInput = document.getElementById('animationSpeed');
-        const starMovementSpeedInput = document.getElementById('starMovementSpeed');
-        const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
-        const clusterCountInput = document.getElementById('clusterCount');
-        const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
-
-        if (starCountInput) {
-            starCountInput.addEventListener('input', (e) => {
-                this.options.starCount = parseInt(e.target.value);
-                document.getElementById('starCountValue').textContent = this.options.starCount;
-                this.createStars();
-            });
-        }
-
-        if (distanceInput) {
-            distanceInput.addEventListener('input', (e) => {
-                this.options.connectionDistance = parseInt(e.target.value);
-                document.getElementById('distanceValue').textContent = this.options.connectionDistance;
-            });
-        }
-
-        if (speedInput) {
-            speedInput.addEventListener('input', (e) => {
-                const speed = parseFloat(e.target.value);
-                document.getElementById('speedValue').textContent = speed.toFixed(1);
-                gsap.globalTimeline.timeScale(speed);
-            });
-        }
-
-        if (starMovementSpeedInput) {
-            starMovementSpeedInput.addEventListener('input', (e) => {
-                this.options.starMovementSpeed = parseFloat(e.target.value);
-                document.getElementById('starMovementSpeedValue').textContent = this.options.starMovementSpeed.toFixed(2);
-                this.createStars(); // Recreate stars with new movement speed
-            });
-        }
-
-        if (maxStarsPerClusterInput) {
-            maxStarsPerClusterInput.addEventListener('input', (e) => {
-                this.options.maxStarsPerCluster = parseInt(e.target.value);
-                document.getElementById('maxStarsPerClusterValue').textContent = this.options.maxStarsPerCluster;
-                this.createStars(); // Recreate stars with new cluster size
-            });
-        }
-
-        if (clusterCountInput) {
-            clusterCountInput.addEventListener('input', (e) => {
-                this.options.clusterCount = parseInt(e.target.value);
-                document.getElementById('clusterCountValue').textContent = this.options.clusterCount;
-                this.createStars(); // Recreate stars with new cluster count
-            });
-        }
-
-        if (trailFadeSpeedInput) {
-            trailFadeSpeedInput.addEventListener('input', (e) => {
-                this.options.trailFadeSpeed = parseFloat(e.target.value);
-                document.getElementById('trailFadeSpeedValue').textContent = this.options.trailFadeSpeed.toFixed(2);
-            });
-        }
-    }
-
-    /**
-     * Handle window resize events and update canvas dimensions.
-     * @returns {void}
-     */
-    resize() {
-        const { canvas } = this;
-        const { innerWidth: width, innerHeight: height } = window;
-
-        // Set display size (css pixels)
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-
-        // Set actual size in memory (scaled to account for extra pixel density)
-        const scale = window.devicePixelRatio;
-        canvas.width = Math.floor(width * scale);
-        canvas.height = Math.floor(height * scale);
-
-        // Normalize coordinate system to use css pixels
-        this.ctx.scale(scale, scale);
-
-        // Update star positions if needed
-        if (this.stars.length > 0) {
-            const scaleX = width / this.canvas.width;
-            const scaleY = height / this.canvas.height;
-
-            this.stars.forEach(star => {
-                star.originX *= scaleX;
-                star.originY *= scaleY;
-                star.x = star.originX + (Math.random() * 2 - 1) * 20; // Slight random offset
-                star.y = star.originY + (Math.random() * 2 - 1) * 20;
-            });
-        }
-    }
-
 
 
     /**
@@ -716,17 +540,15 @@ class Starfield {
                         this.mouse.x, this.mouse.y
                     );
 
-                    // console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
+                    console.log("COLOURS SET:" + this.options.connectionColor.start + " " + this.options.connectionColor.end);
 
                     // Use configured connection colors with opacity applied
-                    const startColor = this.options.connectionColor.start || 'rgba(212, 14, 14, 0.8)';
+                    const startColor = this.options.connectionColor.start || 'rgba(226, 226, 235, 0.8)';
                     const endColor = this.options.connectionColor.end || 'rgba(4, 49, 11, 0.4)';
-
-                    // console.log(startColor, endColor);
 
                     // Apply opacity to the colors
                     const startColorWithOpacity = this._applyOpacityToColor(startColor, opacity);
-                    const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 0.5);
+                    const endColorWithOpacity = this._applyOpacityToColor(endColor, opacity * 1);
 
                     // console.log(startColorWithOpacity, endColorWithOpacity);
 
@@ -793,6 +615,161 @@ class Starfield {
         if (connectionsEl) connectionsEl.textContent = this.visibleConnections;
     }
 
+
+    /**
+     * Set up event listeners for mouse movement and window resizing.
+     * @private
+     * @returns {void}
+     */
+    setupEventListeners() {
+        // Update center points
+        this.centerX = this.canvas.width / 2;
+        this.centerY = this.canvas.height / 2;
+
+        // Mouse movement with throttling for better performance
+        let lastMove = 0;
+        const throttleDelay = 16; // ~60fps
+
+        const handleMouseMove = (e) => {
+            const now = performance.now();
+            if (now - lastMove < throttleDelay) return;
+            lastMove = now;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Calculate normalized mouse position (-1 to 1)
+            this.mouse = {
+                x: x,
+                y: y,
+                normX: (x / this.canvas.width - 0.5) * 2,
+                normY: (y / this.canvas.height - 0.5) * 2
+            };
+
+            // Parallax positions will be updated in the next animation frame
+        };
+
+        // Mouse move
+        this.canvas.addEventListener('mousemove', handleMouseMove);
+
+        // Touch support
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                handleMouseMove(mouseEvent);
+            }
+        }, { passive: false });
+
+        // Mouse/touch leave
+        const handleLeave = () => {
+            // Smoothly return stars to original position
+            this.stars.forEach(star => {
+                star.parallaxX = 0;
+                star.parallaxY = 0;
+            });
+            this.mouse = null;
+        };
+
+        this.canvas.addEventListener('mouseleave', handleLeave);
+        this.canvas.addEventListener('touchend', handleLeave);
+        this.canvas.addEventListener('touchcancel', handleLeave);
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            this.resize();
+        });
+
+        // UI Controls
+        const starCountInput = document.getElementById('starCount');
+        const distanceInput = document.getElementById('connectionDistance');
+        const speedInput = document.getElementById('animationSpeed');
+        const starMovementSpeedInput = document.getElementById('starMovementSpeed');
+        const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
+        const clusterCountInput = document.getElementById('clusterCount');
+        const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
+
+
+        if (speedInput) {
+            speedInput.addEventListener('input', (e) => {
+                const speed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = speed.toFixed(1);
+                gsap.globalTimeline.timeScale(speed);
+            });
+        }
+
+        if (starMovementSpeedInput) {
+            starMovementSpeedInput.addEventListener('input', (e) => {
+                this.options.starMovementSpeed = parseFloat(e.target.value);
+                document.getElementById('starMovementSpeedValue').textContent = this.options.starMovementSpeed.toFixed(2);
+                this.createStars(); // Recreate stars with new movement speed
+            });
+        }
+
+        if (maxStarsPerClusterInput) {
+            maxStarsPerClusterInput.addEventListener('input', (e) => {
+                this.options.maxStarsPerCluster = parseInt(e.target.value);
+                document.getElementById('maxStarsPerClusterValue').textContent = this.options.maxStarsPerCluster;
+                this.createStars(); // Recreate stars with new cluster size
+            });
+        }
+
+        if (clusterCountInput) {
+            clusterCountInput.addEventListener('input', (e) => {
+                this.options.clusterCount = parseInt(e.target.value);
+                document.getElementById('clusterCountValue').textContent = this.options.clusterCount;
+                this.createStars(); // Recreate stars with new cluster count
+            });
+        }
+
+        if (trailFadeSpeedInput) {
+            trailFadeSpeedInput.addEventListener('input', (e) => {
+                this.options.trailFadeSpeed = parseFloat(e.target.value);
+                document.getElementById('trailFadeSpeedValue').textContent = this.options.trailFadeSpeed.toFixed(2);
+            });
+        }
+    }
+
+
+    /**
+     * Handle window resize events and update canvas dimensions.
+     * @returns {void}
+     */
+    resize() {
+        const { canvas } = this;
+        const { innerWidth: width, innerHeight: height } = window;
+
+        // Set display size (css pixels)
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+
+        // Set actual size in memory (scaled to account for extra pixel density)
+        const scale = window.devicePixelRatio;
+        canvas.width = Math.floor(width * scale);
+        canvas.height = Math.floor(height * scale);
+
+        // Normalize coordinate system to use css pixels
+        this.ctx.scale(scale, scale);
+
+        // Update star positions if needed
+        if (this.stars.length > 0) {
+            const scaleX = width / this.canvas.width;
+            const scaleY = height / this.canvas.height;
+
+            this.stars.forEach(star => {
+                star.originX *= scaleX;
+                star.originY *= scaleY;
+                star.x = star.originX + (Math.random() * 2 - 1) * 20; // Slight random offset
+                star.y = star.originY + (Math.random() * 2 - 1) * 20;
+            });
+        }
+    }
+
     /**
      * Pause the animation loop while maintaining the current state.
      * @returns {void}
@@ -825,7 +802,7 @@ class Starfield {
     dispose() {
         // Pause the animation first
         this.pause();
-        
+
         // Clean up event listeners
         if (this._handleResize) {
             window.removeEventListener('resize', this._handleResize);
@@ -839,7 +816,7 @@ class Starfield {
 
         // Clear the canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         // Clear references
         this.stars = [];
         this.mouse = null;

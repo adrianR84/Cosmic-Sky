@@ -17,9 +17,12 @@ const DEFAULT_CONFIG = {
     animationSpeed: 1.0,
     trailFadeSpeed: 0.2,
 
-    // Star clustering
-    maxStarsPerCluster: 100,
-    clusterCount: 5,
+    // Star clustering configuration
+    clusters: {
+        enabled: false,
+        maxStarsPerCluster: 100,
+        clusterCount: 5
+    },
 
     // Visual settings
     bgColor: '#000428',
@@ -51,8 +54,8 @@ const DEFAULT_CONFIG = {
         starHueMax: 300,
         starSaturation: 80,
         starLightness: 80,
-        connectionStart: 'rgba(3, 28, 39, 0.8)',
-        connectionEnd: 'rgba(146, 29, 8, 0.4)'
+        connectionStart: 'rgba(4, 75, 22, 1)',
+        connectionEnd: 'rgba(224, 235, 238, 1)'
     }
 };
 
