@@ -50,6 +50,7 @@ class Starfield {
         this.lastTime = 0;
         this.fps = 0;
         this.visibleConnections = 0;
+        // Set mouse connection settings from options or use defaults
         this.mouseConnectionsEnabled = this.options.mouseConnectionsEnabled !== undefined
             ? this.options.mouseConnectionsEnabled
             : true; // Default to true if not specified

@@ -28,20 +28,19 @@ const DEFAULT_CONFIG = {
     moveStarsAwayFromMouse: false,
 
     // Features
-    mouseConnectionsEnabled: false,
-    connectionDistance: 250,
-
-
-    starMovementSpeed: 0.2,
-
+    mouseConnection: {
+        enabled: false,
+        distance: 250
+    },
 
     ellipseMovement: false,
     ellipticalMovementRate: 0.1,
+    starMovementSpeed: 0.2,
 
 
     // Parallax settings
     parallax: {
-        enabled: true,
+        enabled: false,
         intensity: 0.2,
         maxOffset: 100
     },

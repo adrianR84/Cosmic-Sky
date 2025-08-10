@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         starfield.setEllipseMovement(CONFIG.ellipseMovement);
         starfield.setBackgroundColor(CONFIG.bgColor);
         starfield.setBackgroundOpacity(CONFIG.bgOpacity);
-        starfield.setConnectionDistance(CONFIG.connectionDistance);
+        starfield.setConnectionDistance(CONFIG.mouseConnection.distance);
         starfield.setAnimationSpeed(CONFIG.animationSpeed);
         starfield.setStarMovementSpeed(CONFIG.starMovementSpeed);
         starfield.setTrailFadeSpeed(CONFIG.trailFadeSpeed);
@@ -95,8 +95,8 @@ function init() {
         // Default options for the starfield
         const starfieldOptions = {
             starCount: CONFIG.starCount,
-            connectionDistance: CONFIG.connectionDistance,
-            mouseConnectionsEnabled: CONFIG.mouseConnectionsEnabled !== undefined ? CONFIG.mouseConnectionsEnabled : true,
+            connectionDistance: CONFIG.mouseConnection.distance,
+            mouseConnectionsEnabled: CONFIG.mouseConnection.enabled,
             moveStarsAwayFromMouse: CONFIG.moveStarsAwayFromMouse !== undefined ? CONFIG.moveStarsAwayFromMouse : false,
             starColor: {
                 hue: Utils.randomInRange(CONFIG.colors.starHueMin, CONFIG.colors.starHueMax),
@@ -189,9 +189,13 @@ function initUIControls() {
 
     // Set initial values from CONFIG and update displays
     if (mouseConnectionsToggle) {
-        mouseConnectionsToggle.checked = CONFIG.mouseConnectionsEnabled;
+        // Initialize mouse connection settings with safe defaults if not present
+        if (!CONFIG.mouseConnection) {
+            CONFIG.mouseConnection = { enabled: false, distance: 250 };
+        }
+        mouseConnectionsToggle.checked = CONFIG.mouseConnection.enabled;
         if (connectionControls) {
-            connectionControls.style.display = CONFIG.mouseConnectionsEnabled ? 'block' : 'none';
+            connectionControls.style.display = CONFIG.mouseConnection.enabled ? 'block' : 'none';
         }
     }
 
@@ -201,8 +205,12 @@ function initUIControls() {
     }
 
     if (distanceInput) {
-        distanceInput.value = CONFIG.connectionDistance;
-        document.getElementById('distanceValue').textContent = CONFIG.connectionDistance;
+        // Ensure mouseConnection object exists
+        if (!CONFIG.mouseConnection) {
+            CONFIG.mouseConnection = { enabled: false, distance: 250 };
+        }
+        distanceInput.value = CONFIG.mouseConnection.distance;
+        document.getElementById('distanceValue').textContent = CONFIG.mouseConnection.distance;
     }
 
     if (speedInput) {
@@ -254,13 +262,24 @@ function initUIControls() {
 
     // Add mouse connections toggle event listener
     if (mouseConnectionsToggle) {
-        mouseConnectionsToggle.addEventListener('change', (e) => {
-            CONFIG.mouseConnectionsEnabled = e.target.checked;
+        // Set initial state from config
+        if (CONFIG.mouseConnection) {
+            mouseConnectionsToggle.checked = CONFIG.mouseConnection.enabled;
             if (connectionControls) {
-                connectionControls.style.display = CONFIG.mouseConnectionsEnabled ? 'block' : 'none';
+                connectionControls.style.display = CONFIG.mouseConnection.enabled ? 'block' : 'none';
+            }
+        }
+
+        mouseConnectionsToggle.addEventListener('change', (e) => {
+            if (!CONFIG.mouseConnection) {
+                CONFIG.mouseConnection = { enabled: true };
+            }
+            CONFIG.mouseConnection.enabled = e.target.checked;
+            if (connectionControls) {
+                connectionControls.style.display = CONFIG.mouseConnection.enabled ? 'block' : 'none';
             }
             if (starfield) {
-                starfield.setMouseConnectionsEnabled(CONFIG.mouseConnectionsEnabled);
+                starfield.setMouseConnectionsEnabled(CONFIG.mouseConnection.enabled);
             }
             saveConfig(CONFIG);
         });
@@ -410,10 +429,14 @@ function initUIControls() {
     // Add event listeners for other controls
     if (distanceInput) {
         distanceInput.addEventListener('input', (e) => {
-            CONFIG.connectionDistance = parseInt(e.target.value);
-            document.getElementById('distanceValue').textContent = CONFIG.connectionDistance;
+            // Ensure mouseConnection object exists
+            if (!CONFIG.mouseConnection) {
+                CONFIG.mouseConnection = { enabled: false, distance: 250 };
+            }
+            CONFIG.mouseConnection.distance = parseInt(e.target.value);
+            document.getElementById('distanceValue').textContent = CONFIG.mouseConnection.distance;
             if (starfield) {
-                starfield.setConnectionDistance(CONFIG.connectionDistance);
+                starfield.setConnectionDistance(CONFIG.mouseConnection.distance);
             }
             saveConfig(CONFIG);
         });
