@@ -793,21 +793,56 @@ class Starfield {
     }
 
     /**
+     * Pause the animation loop while maintaining the current state.
+     * @returns {void}
+     */
+    pause() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+            this._isPaused = true;
+        }
+    }
+
+    /**
+     * Resume the animation loop if it was paused.
+     * @returns {void}
+     */
+    resume() {
+        if (this._isPaused) {
+            this._isPaused = false;
+            this.lastTime = performance.now(); // Reset last time to prevent large delta on resume
+            this.animate();
+        }
+    }
+
+    /**
      * Clean up resources and stop animations.
      * Should be called when the starfield is no longer needed.
      * @returns {void}
      */
     dispose() {
+        // Pause the animation first
+        this.pause();
+        
         // Clean up event listeners
-        window.removeEventListener('resize', this._handleResize);
-        this.canvas.removeEventListener('mousemove', this._handleMouseMove);
-        this.canvas.removeEventListener('mouseleave', this._handleLeave);
-
-        // Stop the animation loop
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
+        if (this._handleResize) {
+            window.removeEventListener('resize', this._handleResize);
         }
+        if (this._handleMouseMove) {
+            this.canvas.removeEventListener('mousemove', this._handleMouseMove);
+        }
+        if (this._handleLeave) {
+            this.canvas.removeEventListener('mouseleave', this._handleLeave);
+        }
+
+        // Clear the canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Clear references
+        this.stars = [];
+        this.mouse = null;
+        this.animationId = null;
     }
 }
 

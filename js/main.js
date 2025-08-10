@@ -9,6 +9,7 @@ import { loadConfig, saveConfig, getConfig } from './config/index.js';
 import { Starfield } from './starfield.js';
 import ControlPanelManager from './utils/controlPanel.js';
 import Utils from './utils/utils.js';
+import { isCanvasSupported, showError } from './utils/browser.js';
 
 /** @type {Starfield} - The main starfield instance */
 let starfield;
@@ -32,16 +33,16 @@ let CONFIG = getConfig();
 document.addEventListener('DOMContentLoaded', () => {
     // Check if browser supports required features
     if (!isCanvasSupported()) {
-        showUnsupportedMessage();
+        showError('Your browser does not support all the features required for this visualization.');
         return;
     }
 
     // Configuration is already loaded via getConfig()
     // No need to manually merge with defaults as it's handled by the config module
-    const savedConfig = loadConfig();
-    if (savedConfig) {
-        CONFIG = savedConfig;
-    }
+    // const savedConfig = loadConfig();
+    // if (savedConfig) {
+    //     CONFIG = savedConfig;
+    // }
 
     // Initialize the control panel
     const controlPanel = new ControlPanelManager();
@@ -54,23 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize parallax controls state
     updateParallaxUI();
-
-    // The control panel is now managed by ControlPanelManager in controlPanel.js
-    // which is automatically initialized when the DOM is loaded
-
-    // Set up window resize handler
-    window.addEventListener('resize', handleResize);
-
-    // Handle page visibility changes
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            // Pause animation when page is hidden
-            if (starfield) starfield.pause();
-        } else {
-            // Resume animation when page is visible
-            if (starfield) starfield.resume();
-        }
-    });
 
     // Apply any starfield-specific settings
     if (starfield) {
@@ -93,88 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-/**
- * Check if the browser supports all required features.
- * @returns {boolean} True if all required features are supported
- */
-function isCanvasSupported() {
-    const canvas = document.createElement('canvas');
-    return !!(canvas.getContext && canvas.getContext('2d'));
-}
 
-/**
- * Display an error message when the browser doesn't support required features.
- * Shows a user-friendly message with instructions for modern browsers.
- * @returns {void}
- */
-function showUnsupportedMessage() {
-    const message = document.createElement('div');
-    message.className = 'error-message';
-    message.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 20px;
-        border-radius: 5px;
-        max-width: 80%;
-        text-align: center;
-        z-index: 1000;
-    `;
-    message.innerHTML = `
-        <h2>Browser Not Supported</h2>
-        <p>Your browser does not support all the features required for this visualization.</p>
-        <p>Please try using the latest version of Chrome, Firefox, Safari, or Edge.</p>
-    `;
-    document.body.appendChild(message);
-}
-
-/**
- * Display an error message to the user.
- * @param {string} message - The error message to display
- * @returns {void}
- */
-function showError(message) {
-    console.error(message);
-
-    // Check if we already have an error message displayed
-    let errorDiv = document.querySelector('.error-message');
-
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 50, 50, 0.9);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            max-width: 300px;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        `;
-        document.body.appendChild(errorDiv);
-    }
-
-    errorDiv.textContent = message;
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        if (errorDiv) {
-            errorDiv.style.transition = 'opacity 0.5s';
-            errorDiv.style.opacity = '0';
-            setTimeout(() => {
-                if (errorDiv && document.body.contains(errorDiv)) {
-                    document.body.removeChild(errorDiv);
-                }
-            }, 500);
-        }
-    }, 5000);
-}
 
 /**
  * Initialize the starfield visualization.
@@ -214,9 +117,6 @@ function init() {
         // Create the starfield with configuration
         starfield = new Starfield(canvas, starfieldOptions);
 
-        // Set initial UI values
-        updateUI();
-
         isInitialized = true;
     } catch (error) {
         console.error('Error initializing starfield:', error);
@@ -224,22 +124,6 @@ function init() {
     }
 }
 
-/**
- * Handle window resize with debounce
- */
-function handleResize() {
-    // Clear any pending resize
-    if (resizeTimeout) {
-        cancelAnimationFrame(resizeTimeout);
-    }
-
-    // Debounce the resize handler
-    resizeTimeout = requestAnimationFrame(() => {
-        if (starfield) {
-            starfield.resize();
-        }
-    });
-}
 
 /**
  * Update UI elements to reflect the current configuration.
@@ -270,87 +154,6 @@ function updateParallaxUI() {
         parallaxControls.style.display = CONFIG.parallax.enabled ? 'block' : 'none';
         // Add smooth transition
         parallaxControls.style.transition = 'opacity 0.3s ease, display 0.3s ease';
-    }
-}
-
-function updateUI() {
-    // Update star count display
-    const starCountEl = document.getElementById('starCount');
-    if (starCountEl) {
-        starCountEl.value = CONFIG.starCount;
-        document.getElementById('starCountValue').textContent = CONFIG.starCount;
-    }
-
-    // Update connection distance display
-    const distanceEl = document.getElementById('connectionDistance');
-    if (distanceEl) {
-        distanceEl.value = CONFIG.connectionDistance;
-        document.getElementById('distanceValue').textContent = CONFIG.connectionDistance;
-    }
-
-    // Update animation speed display
-    const speedEl = document.getElementById('animationSpeed');
-    if (speedEl) {
-        speedEl.value = CONFIG.animationSpeed;
-        document.getElementById('speedValue').textContent = CONFIG.animationSpeed.toFixed(1);
-
-        // Set initial GSAP speed
-        gsap.globalTimeline.timeScale(CONFIG.animationSpeed);
-    }
-
-    // Update star movement speed display
-    // const starMovementSpeedEl = document.getElementById('starMovementSpeed');
-    // if (starMovementSpeedEl) {
-    //     starMovementSpeedEl.value = CONFIG.starMovementSpeed;
-    //     document.getElementById('starMovementSpeedValue').textContent = CONFIG.starMovementSpeed.toFixed(2);
-    // }
-
-    // Update max stars per cluster display
-    const maxStarsPerClusterEl = document.getElementById('maxStarsPerCluster');
-    if (maxStarsPerClusterEl) {
-        maxStarsPerClusterEl.value = CONFIG.maxStarsPerCluster;
-        document.getElementById('maxStarsPerClusterValue').textContent = CONFIG.maxStarsPerCluster;
-    }
-
-    // Update cluster count display
-    const clusterCountEl = document.getElementById('clusterCount');
-    if (clusterCountEl) {
-        clusterCountEl.value = CONFIG.clusterCount;
-        document.getElementById('clusterCountValue').textContent = CONFIG.clusterCount;
-    }
-
-    // Update trail fade speed display
-    const trailFadeSpeedEl = document.getElementById('trailFadeSpeed');
-    if (trailFadeSpeedEl) {
-        trailFadeSpeedEl.value = CONFIG.trailFadeSpeed;
-        document.getElementById('trailFadeSpeedValue').textContent = CONFIG.trailFadeSpeed.toFixed(2);
-    }
-
-    // Update ellipse movement toggle
-    // const ellipseToggle = document.getElementById('ellipseMovement');
-    // if (ellipseToggle) {
-    //     ellipseToggle.checked = CONFIG.ellipseMovement;
-    //     const starMovementSpeedContainer = document.getElementById('starMovementSpeedContainer');
-    //     if (starMovementSpeedContainer) {
-    //         starMovementSpeedContainer.style.display = CONFIG.ellipseMovement ? 'block' : 'none';
-    //     }
-    // }
-
-    // Update background color and opacity
-    const bgColorPicker = document.getElementById('bgColor');
-    const bgOpacitySlider = document.getElementById('bgOpacity');
-    const bgColorValue = document.getElementById('bgColorValue');
-    const opacityValue = document.getElementById('opacityValue');
-
-    if (bgColorPicker && bgColorValue) {
-        bgColorPicker.value = CONFIG.bgColor;
-        bgColorValue.textContent = CONFIG.bgColor;
-    }
-
-    if (bgOpacitySlider && opacityValue) {
-        const opacityPercent = Math.round(CONFIG.bgOpacity * 100);
-        bgOpacitySlider.value = opacityPercent;
-        opacityValue.textContent = `${opacityPercent}%`;
     }
 }
 
@@ -747,6 +550,10 @@ function initUIControls() {
     }
 }
 
+
+// Set up window resize handler
+window.addEventListener('resize', handleResize);
+
 /**
  * Handle page visibility changes.
  * Pauses animations when the page is hidden to save resources.
@@ -765,6 +572,23 @@ document.addEventListener('visibilitychange', () => {
         }
     }
 });
+
+/**
+ * Handle window resize with debounce
+ */
+function handleResize() {
+    // Clear any pending resize
+    if (resizeTimeout) {
+        cancelAnimationFrame(resizeTimeout);
+    }
+
+    // Debounce the resize handler
+    resizeTimeout = requestAnimationFrame(() => {
+        if (starfield) {
+            starfield.resize();
+        }
+    });
+}
 
 // Handle page unload
 window.addEventListener('beforeunload', () => {

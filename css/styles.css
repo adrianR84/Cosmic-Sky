@@ -13,8 +13,6 @@
 body {
     margin: 0;
     overflow: hidden;
-    background: #000428;
-    background: linear-gradient(to bottom, #000428, #004e92);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: white;
     height: 100vh;
@@ -65,7 +63,7 @@ body {
     max-width: 300px;
     width: 100%;
     transition: all 0.3s ease;
-    position: fixed;
+    position: absolute;
     inset: 10px 10px auto auto;
     z-index: 1000;
     max-height: 95vh;

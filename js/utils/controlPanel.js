@@ -2,6 +2,7 @@
  * Control Panel Manager
  * Handles dragging, resizing, and minimizing the control panel
  */
+import { saveConfig, loadConfig, STORAGE_KEYS } from '../config/index.js';
 
 class ControlPanelManager {
     constructor() {
@@ -11,12 +12,9 @@ class ControlPanelManager {
             return;
         }
 
-        // Set default position if not set
-        if (!this.panel.style.position) {
-            this.panel.style.position = 'fixed';
-            this.panel.style.top = '10px';
-            this.panel.style.right = '10px';
-        }
+
+        // Load saved state if available
+        this.savedState = loadConfig(STORAGE_KEYS.CONTROL_PANEL) || {};
 
         this.isDragging = false;
         this.isMinimized = false;
@@ -48,17 +46,19 @@ class ControlPanelManager {
     initializeControls() {
         // Find the existing minimize button
         this.minimizeButton = this.panel.querySelector('.minimize-btn-dark');
-        
+
         if (!this.minimizeButton) {
             console.error('Minimize button not found');
             return;
         }
-        
-        // Set initial state
+
+
+
+        // Set initial state if not minimized from saved state
         this.minimizeButton.innerHTML = '−';
         this.minimizeButton.title = 'Minimize';
         this.minimizeButton.setAttribute('aria-label', 'Minimize control panel');
-        
+
         // Add click handler
         this.minimizeButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -76,10 +76,10 @@ class ControlPanelManager {
             console.error('Modal header not found');
             return;
         }
-        
+
         // Make the header cursor indicate it's draggable
         header.style.cursor = 'move';
-        
+
         header.addEventListener('mousedown', (e) => {
             // Don't start drag on the minimize button
             if (e.target === this.minimizeButton || e.target.closest('.minimize-btn-dark')) {
@@ -116,9 +116,34 @@ class ControlPanelManager {
         });
 
         document.addEventListener('mouseup', () => {
-            this.isDragging = false;
-            this.panel.style.cursor = 'move';
+            if (this.isDragging) {
+                this.isDragging = false;
+                this.panel.style.cursor = 'move';
+                // Save state after drag ends
+                this.saveState();
+            }
         });
+    }
+
+    /**
+     * Save the current state of the control panel
+     * @private
+     */
+    saveState() {
+        if (!this.panel) return;
+
+        // Get computed styles to ensure we have the actual values
+        const computedStyle = window.getComputedStyle(this.panel);
+        const top = computedStyle.top;
+        const left = computedStyle.left;
+
+        const state = {
+            isMinimized: this.isMinimized,
+            position: { top, left }
+        };
+
+        // Save using storage utility with the correct key
+        saveConfig(state, STORAGE_KEYS.CONTROL_PANEL);
     }
 
     /**
@@ -143,16 +168,20 @@ class ControlPanelManager {
         this.originalHeight = this.panel.offsetHeight;
         this.originalOverflow = this.panel.style.overflow;
 
-        // Set minimized state
+        // Hide the content
         const modalContent = this.panel.querySelector('.modal-content-dark');
         if (modalContent) {
             modalContent.style.display = 'none';
         }
-        
+
+        // Set minimized styles
         this.panel.style.height = 'auto';
         this.minimizeButton.innerHTML = '+';
         this.minimizeButton.title = 'Restore';
         this.isMinimized = true;
+
+        // Save the state
+        this.saveState();
     }
 
     /**
@@ -161,50 +190,66 @@ class ControlPanelManager {
     restore() {
         if (!this.isMinimized) return;
 
-        // Restore content
+        // Show the content
         const modalContent = this.panel.querySelector('.modal-content-dark');
         if (modalContent) {
             modalContent.style.display = '';
         }
-        
-        this.panel.style.height = '';
+
+        // Restore the original height
+        if (this.originalHeight) {
+            this.panel.style.height = `${this.originalHeight}px`;
+        } else {
+            this.panel.style.height = '';
+        }
+
+        // Update UI
         this.minimizeButton.innerHTML = '−';
         this.minimizeButton.title = 'Minimize';
         this.isMinimized = false;
+
+        // Save the state
+        this.saveState();
     }
 
     /**
      * Initialize panel position and state
      */
     initializePosition() {
-        this.panel.style.position = 'fixed';
-        this.panel.style.top = '10px';
-        this.panel.style.right = '10px';
-        this.panel.style.left = '';
-        this.panel.style.height = '';
-        this.originalHeight = this.panel.offsetHeight;
-    }
 
-    /**
-     * Ensure the panel is visible on screen
-     */
-    ensureVisibility() {
-        const rect = this.panel.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        // Apply saved state if available
+        if (this.savedState) {
+            const { isMinimized, position } = this.savedState;
 
-        // Reset any negative positions
-        if (rect.left < 0) this.panel.style.left = '10px';
-        if (rect.top < 0) this.panel.style.top = '10px';
+            // Apply position if it exists
+            if (position) {
+                // Apply position first before making it visible to prevent flicker
+                if (position.top) {
+                    this.panel.style.top = position.top;
+                }
+                if (position.left) {
+                    this.panel.style.left = position.left;
+                }
 
-        // If panel is completely off-screen, reset to default position
-        if (rect.right < 0 || rect.bottom < 0 ||
-            rect.left > viewportWidth || rect.top > viewportHeight) {
-            this.panel.style.top = '10px';
-            this.panel.style.right = '10px';
-            this.panel.style.left = '';
+                // Remove right style if we have a left position to prevent conflicts
+                if (position.left) {
+                    this.panel.style.removeProperty('right');
+                }
+
+                // Make sure the panel is visible
+                this.panel.style.display = 'block';
+                this.panel.style.visibility = 'visible';
+                this.panel.offsetHeight; // Force reflow
+            }
+
+            // Apply minimized state if needed
+            if (isMinimized)
+                this.minimize();
+
         }
+
     }
+
 }
 
 // Export the ControlPanelManager class as default

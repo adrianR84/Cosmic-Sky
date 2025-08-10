@@ -3,37 +3,41 @@
  * Provides methods to save, load, and merge configurations.
  */
 
+import { STORAGE_KEYS } from '../config/index.js';
+
 /**
  * Save configuration to localStorage.
  * @param {Object} config - The configuration object to save
+ * @param {string} [name=STORAGE_KEYS.MAIN_CONFIG] - The name under which to save the configuration
  * @returns {boolean} True if saved successfully, false otherwise
  */
-function saveConfig(config) {
+function saveConfig(config, name = STORAGE_KEYS.MAIN_CONFIG) {
     try {
-        localStorage.setItem('cosmicGalaxyConfig', JSON.stringify(config));
+        localStorage.setItem(name, JSON.stringify(config));
         return true;
     } catch (error) {
-        console.error('Failed to save configuration:', error);
+        console.error(`Failed to save configuration '${name}':`, error);
         return false;
     }
 }
 
 /**
  * Load configuration from localStorage.
+ * @param {string} [name=STORAGE_KEYS.MAIN_CONFIG] - The name of the configuration to load
  * @returns {Object|null} The loaded configuration or null if none exists or error occurs
  */
-function loadConfig() {
+function loadConfig(name = STORAGE_KEYS.MAIN_CONFIG) {
     try {
-        const savedConfig = localStorage.getItem('cosmicGalaxyConfig');
+        const savedConfig = localStorage.getItem(name);
         if (!savedConfig) return null;
         
         const parsed = JSON.parse(savedConfig);
         // Validate that the parsed config is an object and not null
         return parsed && typeof parsed === 'object' ? parsed : null;
     } catch (error) {
-        console.error('Failed to load configuration:', error);
+        console.error(`Failed to load configuration '${name}':`, error);
         // Clear invalid config from storage
-        localStorage.removeItem('cosmicGalaxyConfig');
+        localStorage.removeItem(name);
         return null;
     }
 }
