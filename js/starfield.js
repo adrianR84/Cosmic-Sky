@@ -213,7 +213,7 @@ class Starfield {
                     ellipticalMovementRate: this.options.ellipticalMovementRate, // Pass the elliptical movement rate
                     ellipseRadiusX: Utils.randomInRange(10, 50) * (0.5 + Math.random() * 1.5), // Random variation
                     ellipseRadiusY: Utils.randomInRange(5, 30) * (0.5 + Math.random() * 1.5), // Random variation
-                    ellipseSpeed: Utils.randomInRange(0.0005, 0.002) * movementSpeed, // Speed based on movement speed
+                    ellipseSpeed: Utils.randomInRange(0.0005, 0.002) * movementSpeed * 4, // Speed based on movement speed
                     ellipseRotation: Math.random() * Math.PI * 2 // Random rotation
                 });
 
@@ -295,7 +295,7 @@ class Starfield {
                 ellipseEnabled: this.options.ellipseEnabled, // Use global setting
                 ellipseRadiusX: Utils.randomInRange(10, 50) * (0.5 + Math.random() * 1.5), // Random variation
                 ellipseRadiusY: Utils.randomInRange(5, 30) * (0.5 + Math.random() * 1.5), // Random variation
-                ellipseSpeed: Utils.randomInRange(0.0005, 0.002) * starMovementSpeed, // Speed based on movement speed
+                ellipseSpeed: Utils.randomInRange(0.0005, 0.002) * starMovementSpeed * 4, // Speed based on movement speed
                 ellipseRotation: Math.random() * Math.PI * 2 // Random rotation
             });
 

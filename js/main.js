@@ -37,13 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Configuration is already loaded via getConfig()
-    // No need to manually merge with defaults as it's handled by the config module
-    // const savedConfig = loadConfig();
-    // if (savedConfig) {
-    //     CONFIG = savedConfig;
-    // }
-
     // Initialize the control panel
     const controlPanel = new ControlPanelManager();
 
@@ -56,25 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize parallax controls state
     updateParallaxUI();
 
-    // Apply any starfield-specific settings
-    if (starfield) {
-        starfield.setEllipseMovement(CONFIG.ellipseMovement);
-        starfield.setBackgroundColor(CONFIG.bgColor);
-        starfield.setBackgroundOpacity(CONFIG.bgOpacity);
-        starfield.setConnectionDistance(CONFIG.mouseConnection.distance);
-        starfield.setAnimationSpeed(CONFIG.animationSpeed);
-        starfield.setStarMovementSpeed(CONFIG.starMovementSpeed);
-        starfield.setTrailFadeSpeed(CONFIG.trailFadeSpeed);
-
-        // Apply parallax settings
-        if (CONFIG.parallax) {
-            starfield.setParallaxConfig({
-                enabled: CONFIG.parallax.enabled,
-                intensity: CONFIG.parallax.intensity,
-                maxOffset: CONFIG.parallax.maxOffset
-            });
-        }
-    }
 });
 
 
@@ -116,9 +90,11 @@ function init() {
             },
             backgroundColor: 'transparent',
             trailFadeSpeed: CONFIG.trailFadeSpeed,
-            ellipseMovement: false, // Default to original movement
-            ellipticalMovementRate: CONFIG.ellipticalMovementRate, // Use configured elliptical movement rate
-            clusterEnabled: CONFIG.clusterEnabled !== undefined ? CONFIG.clusterEnabled : true, // Respect cluster toggle, default to true
+
+            ellipseEnabled: CONFIG.starMoving.enabled,
+            ellipticalMovementRate: CONFIG.starMoving.ellipticalRate,
+
+            starMovementSpeed: CONFIG.starMoving.speed,
         };
 
         // Create the starfield with configuration
@@ -226,10 +202,10 @@ function initUIControls() {
     }
 
     if (starMovementSpeedInput) {
-        starMovementSpeedInput.value = CONFIG.starMovementSpeed;
+        starMovementSpeedInput.value = CONFIG.starMoving.speed;
         const starMovementSpeedValue = document.getElementById('starMovementSpeedValue');
         if (starMovementSpeedValue) {
-            starMovementSpeedValue.textContent = CONFIG.starMovementSpeed.toFixed(2);
+            starMovementSpeedValue.textContent = CONFIG.starMoving.speed.toFixed(2);
         }
     }
 
@@ -258,10 +234,10 @@ function initUIControls() {
     }
 
     if (ellipseToggle) {
-        ellipseToggle.checked = CONFIG.ellipseMovement;
+        ellipseToggle.checked = CONFIG.starMoving.enabled;
         const starMovementSpeedContainer = document.getElementById('starMovementSpeedContainer');
         if (starMovementSpeedContainer) {
-            starMovementSpeedContainer.style.display = CONFIG.ellipseMovement ? 'block' : 'none';
+            starMovementSpeedContainer.style.display = CONFIG.starMoving.enabled ? 'block' : 'none';
         }
     }
 
@@ -348,17 +324,18 @@ function initUIControls() {
     // Ellipse movement controls initialization
     if (ellipseToggle && ellipseControls) {
         // Set initial state from config
-        ellipseToggle.checked = CONFIG.ellipseMovement || false;
+        ellipseToggle.checked = CONFIG.starMoving.enabled || false;
         ellipseControls.style.display = ellipseToggle.checked ? 'block' : 'none';
 
         // Toggle ellipse movement and controls visibility
         ellipseToggle.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
-            CONFIG.ellipseMovement = isChecked;
+            CONFIG.starMoving.enabled = isChecked;
             ellipseControls.style.display = isChecked ? 'block' : 'none';
 
             if (starfield) {
                 starfield.options.ellipseEnabled = isChecked;
+                // starfield.setEllipseMovement(isChecked);
                 // Recreate stars to apply the new movement type
                 starfield.createStars();
             }
@@ -369,14 +346,14 @@ function initUIControls() {
         // Update elliptical movement rate (displayed as percentage in UI but stored as 0-1)
         if (ellipticalMovementRateInput) {
             // Convert internal value (0-1) to percentage (0-100) for display
-            const displayValue = ((CONFIG.ellipticalMovementRate || 0.1) * 100).toFixed(0);
-            ellipticalMovementRateInput.value = CONFIG.ellipticalMovementRate || 0.1;
+            const displayValue = ((CONFIG.starMoving.ellipticalRate || 0.1) * 100).toFixed(0);
+            ellipticalMovementRateInput.value = CONFIG.starMoving.ellipticalRate || 0.1;
             document.getElementById('ellipticalMovementRateValue').textContent = displayValue;
 
             ellipticalMovementRateInput.addEventListener('input', (e) => {
                 // Store the actual 0-1 value in the config
                 const value = parseFloat(e.target.value);
-                CONFIG.ellipticalMovementRate = value;
+                CONFIG.starMoving.ellipticalRate = value;
 
                 // Display as percentage (0-100)
                 const displayValue = (value * 100).toFixed(0);
@@ -394,23 +371,25 @@ function initUIControls() {
 
         // Update star movement speed
         if (starMovementSpeedInput) {
-            starMovementSpeedInput.value = CONFIG.starMovementSpeed || 0.2;
-            document.getElementById('starMovementSpeedValue').textContent = (CONFIG.starMovementSpeed || 0.2).toFixed(2);
+            starMovementSpeedInput.value = CONFIG.starMoving.speed || 0.2;
+            document.getElementById('starMovementSpeedValue').textContent = (CONFIG.starMoving.speed || 0.2).toFixed(2);
 
             starMovementSpeedInput.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                CONFIG.starMovementSpeed = value;
+                CONFIG.starMoving.speed = value;
                 document.getElementById('starMovementSpeedValue').textContent = value.toFixed(2);
 
                 if (starfield) {
                     // Update the starfield's movement speed
                     starfield.options.starMovementSpeed = value;
-                    // Update all stars' movement speed
-                    starfield.stars.forEach(star => {
-                        if (star.animation) {
-                            star.animation.timeScale(value);
-                        }
-                    });
+
+                    starfield.setStarMovementSpeed(value);
+                    // // Update all stars' movement speed
+                    // starfield.stars.forEach(star => {
+                    //     if (star.animation) {
+                    //         star.animation.timeScale(value);
+                    //     }
+                    // });
                 }
 
                 saveConfig(CONFIG);
@@ -580,6 +559,15 @@ function initUIControls() {
                 saveConfig(CONFIG);
                 starfield.createStars();
             }
+        });
+    }
+
+
+    if (CONFIG.parallax) {
+        starfield.setParallaxConfig({
+            enabled: CONFIG.parallax.enabled,
+            intensity: CONFIG.parallax.intensity,
+            maxOffset: CONFIG.parallax.maxOffset
         });
     }
 

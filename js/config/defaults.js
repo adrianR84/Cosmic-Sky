@@ -28,18 +28,18 @@ const DEFAULT_CONFIG = {
     bgColor: '#000428',
     bgOpacity: 1.0,
 
-    moveStarsAwayFromMouse: false,
-
     // Features
     mouseConnection: {
         enabled: false,
         distance: 250
     },
 
-    ellipseMovement: false,
-    ellipticalMovementRate: 0.1,
-    starMovementSpeed: 0.2,
-
+    // Star movement settings
+    starMoving: {
+        enabled: false,
+        ellipticalRate: 0.1,
+        speed: 0.2
+    },
 
     // Parallax settings
     parallax: {
@@ -47,6 +47,8 @@ const DEFAULT_CONFIG = {
         intensity: 0.2,
         maxOffset: 100
     },
+
+    moveStarsAwayFromMouse: false,
 
     // Color settings
     colors: {
