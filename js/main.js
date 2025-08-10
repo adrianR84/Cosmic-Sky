@@ -5,7 +5,7 @@
  */
 
 // Import configuration and utilities
-import { loadConfig, saveConfig, getConfig } from './config/index.js';
+import { loadConfig, saveConfig, getConfig, FEATURES } from './config/index.js';
 import { Starfield } from './starfield.js';
 import ControlPanelManager from './utils/controlPanel.js';
 import Utils from './utils/utils.js';
@@ -727,6 +727,32 @@ function initUIControls() {
                 }, 1000);
             }
         });
+    }
+
+    // Initialize clear settings button if the feature is enabled
+    const clearSettingsBtn = document.getElementById('clearSettings');
+    if (clearSettingsBtn) {
+        // Show or hide the button based on the feature flag
+        if (FEATURES.CLEAR_LOCAL_STORAGE) {
+            clearSettingsBtn.style.display = 'block';
+
+            clearSettingsBtn.addEventListener('click', () => {
+                // Clear local storage
+                localStorage.clear();
+
+                // Show feedback
+                clearSettingsBtn.textContent = 'Cleared!';
+                clearSettingsBtn.style.backgroundColor = '#4CAF50';
+
+                // Reload the page to apply default settings
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            });
+        } else {
+            // Hide the button if the feature is disabled
+            clearSettingsBtn.style.display = 'none';
+        }
     }
 
     if (trailFadeSpeedInput) {

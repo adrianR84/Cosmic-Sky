@@ -236,7 +236,7 @@ class Star {
         const maxDelayMs = Star.settings.maxEventSeconds * 1000;
         Star.nextShootingStarDelay = minDelayMs + Math.random() * (maxDelayMs - minDelayMs);
 
-        console.log(Star.shootingStarsCount, Star.settings.maxStarsAtOnce, Star.nextShootingStarDelay);
+        // console.log(Star.shootingStarsCount, Star.settings.maxStarsAtOnce, Star.nextShootingStarDelay);
 
         return true;
     }

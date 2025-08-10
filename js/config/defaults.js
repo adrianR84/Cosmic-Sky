@@ -1,4 +1,12 @@
 /**
+ * Feature flags and application settings
+ * These can be toggled to enable/disable features
+ */
+export const FEATURES = {
+    CLEAR_LOCAL_STORAGE: true,    // Show clear local storage button
+};
+
+/**
  * Storage keys used in the application
  */
 const STORAGE_KEYS = {
@@ -7,13 +15,13 @@ const STORAGE_KEYS = {
 };
 
 /**
- * Default configuration values for the Cosmic Galaxy visualization.
+ * Default configuration values for the Sky visualization.
  * These are used when no saved configuration exists in localStorage.
  * @type {Object}
  */
 const DEFAULT_CONFIG = {
     // Core settings
-    starCount: 1000,
+    starCount: 2000,
     animationSpeed: 1.0,
     trailFadeSpeed: 0.2,
 
@@ -33,7 +41,7 @@ const DEFAULT_CONFIG = {
     // Features
     mouseConnection: {
         enabled: false,
-        distance: 250
+        distance: 350
     },
 
     // Shooting stars configuration
@@ -47,8 +55,8 @@ const DEFAULT_CONFIG = {
     // Star movement settings
     starMoving: {
         enabled: false,
-        ellipticalRate: 0.1,
-        speed: 0.2
+        ellipticalRate: 0.3,
+        speed: 0.3
     },
 
     // Parallax settings

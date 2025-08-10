@@ -4,7 +4,7 @@
  */
 
 // Import dependencies
-import { DEFAULT_CONFIG, STORAGE_KEYS } from './defaults.js';
+import { DEFAULT_CONFIG, STORAGE_KEYS, FEATURES } from './defaults.js';
 import { loadConfig, saveConfig, mergeWithDefaults } from '../utils/storage.js';
 
 /**
@@ -21,5 +21,6 @@ export {
     loadConfig,
     saveConfig,
     getConfig,
-    STORAGE_KEYS
+    STORAGE_KEYS,
+    FEATURES
 };
