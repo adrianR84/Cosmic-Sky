@@ -1,6 +1,6 @@
 # Cosmic Galaxy
 
-A mesmerizing, interactive galaxy visualization built with GSAP and HTML5 Canvas. Stars gracefully connect to your pointer as you explore the cosmic expanse.
+A mesmerizing, interactive galaxy visualization built with GSAP and HTML5 Canvas. Stars gracefully connect to your pointer as you explore the cosmic expanse, with dynamic shooting stars and customizable features.
 
 ![Cosmic Galaxy Preview](preview.gif)
 
@@ -9,13 +9,13 @@ A mesmerizing, interactive galaxy visualization built with GSAP and HTML5 Canvas
 - **Smooth Animations** - Powered by GSAP for buttery-smooth motion
 - **Dynamic Starfield** - Thousands of stars with optimized Canvas 2D rendering
 - **Interactive Connections** - Stars connect to your pointer and each other
+- **Shooting Stars** - Configurable shooting stars with adjustable frequency and duration
 - **Responsive Design** - Adapts to any screen size and device
 - **Customizable** - Fine-tune every aspect of the visualization
 - **Performance Optimized** - Efficient rendering with requestAnimationFrame
 - **Resource Friendly** - Smart animation pausing when tab is inactive
-- **Star Clustering** - Natural-looking star clusters with configurable density
-- **Elliptical Orbits** - Some stars follow elegant elliptical paths
-- **Shooting Stars** - Occasional shooting stars add dynamic elements
+- **Feature Flags** - Toggle features on/off via configuration
+- **Persistent Settings** - Saves your preferences in local storage
 
 ## Live Demo
 
@@ -66,12 +66,18 @@ A mesmerizing, interactive galaxy visualization built with GSAP and HTML5 Canvas
 
 ### Interactive Controls
 - **Star Movement Speed** - Adjust how quickly stars move (0.0 to 1.0)
-- **Max Stars per Cluster** - Control cluster density (5-50 stars)
-- **Number of Clusters** - Set how many star clusters to generate (1-10)
+- **Star Count** - Set the number of stars (100-4000)
 - **Trail Fade Speed** - Adjust how quickly star trails disappear (0.01-0.3)
-- **Background Color** - Change the background color of the visualization
-- **Background Opacity** - Set the opacity of the background (0-1)
-- **Elliptical Movement** - Toggle elliptical orbits for stars
+- **Mouse Connections** - Toggle connections between cursor and stars
+- **Connection Distance** - Set how far connections reach (150-500px)
+- **Connection Colors** - Customize start and end colors of connections
+- **Connection Opacity** - Adjust transparency of connections (5-100%)
+
+### Shooting Stars
+- **Enable/Disable** - Toggle shooting stars on/off
+- **Max Stars at Once** - Control number of shooting stars (1-10)
+- **Shoot Duration** - Set how long stars shoot (1-10 seconds)
+- **Star Frequency** - Adjust time between shooting stars (0.1-1.0 seconds)
 
 ### Configuration Persistence
 All your customization settings are automatically saved to your browser's local storage. This means:
@@ -80,8 +86,18 @@ All your customization settings are automatically saved to your browser's local 
 - No need to reconfigure the settings each time you visit
 
 To reset to default settings, you can either:
-1. Clear your browser's local storage for this site, or
-2. Use the browser's developer tools to remove the 'cosmicGalaxyConfig' item from local storage
+1. Click the "Clear" button in the control panel (if enabled)
+2. Clear your browser's local storage for this site, or
+3. Use the browser's developer tools to remove the 'cosmicGalaxyConfig' item from local storage
+
+### Feature Flags
+You can enable/disable features by modifying the `FEATURES` object in `js/config/defaults.js`:
+
+```javascript
+export const FEATURES = {
+    CLEAR_LOCAL_STORAGE: true,    // Show clear local storage button
+};
+```
 
 ### Advanced Customization
 You can further customize the visualization by modifying these values in the code. These changes will be saved automatically:
