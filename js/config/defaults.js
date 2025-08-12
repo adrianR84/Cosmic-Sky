@@ -34,7 +34,9 @@ const DEFAULT_CONFIG = {
 
     // Visual settings
     background: {
+        enabled: false,
         color: '#000428',
+        colorOriginal: '#000428',  // This is the default color that never changes
         opacity: 1.0
     },
 

@@ -90,8 +90,9 @@ function init() {
                 opacity: CONFIG.colors.connectionOpacity
             },
             background: {
-                color: CONFIG.background?.color || '#000428',
-                opacity: CONFIG.background?.opacity ?? 1
+                // Always use colorOriginal when background is disabled, otherwise use the current color
+                color: CONFIG.background.enabled ? (CONFIG.background.color || CONFIG.background.colorOriginal) : CONFIG.background.colorOriginal,
+                opacity: CONFIG.background.enabled ? (CONFIG.background.opacity ?? 1) : 0
             },
             trailFadeSpeed: CONFIG.trailFadeSpeed,
 
@@ -156,13 +157,17 @@ function initUIControls() {
     const speedInput = document.getElementById('animationSpeed');
     const maxStarsPerClusterInput = document.getElementById('maxStarsPerCluster');
 
-    // Parallax controls (declared later where used)
-    const clusterCountInput = document.getElementById('clusterCount');
-    const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
+    // Background controls
+    const bgEnabledToggle = document.getElementById('bgEnabled');
+    const bgControls = document.getElementById('bgControls');
     const bgColorPicker = document.getElementById('bgColor');
     const bgOpacitySlider = document.getElementById('bgOpacity');
     const bgColorValue = document.getElementById('bgColorValue');
     const opacityValue = document.getElementById('opacityValue');
+
+    // Parallax controls (declared later where used)
+    const clusterCountInput = document.getElementById('clusterCount');
+    const trailFadeSpeedInput = document.getElementById('trailFadeSpeed');
 
     // Mouse connections controls
     const mouseConnectionsToggle = document.getElementById('enableMouseConnections');
@@ -180,6 +185,56 @@ function initUIControls() {
     const maxStarsAtOnceInput = document.getElementById('maxStarsAtOnce');
     const maxShootDurationInput = document.getElementById('maxShootDuration');
     const maxEventSecondsInput = document.getElementById('maxEventSeconds');
+
+    // Initialize background settings with safe defaults if not present
+    if (!CONFIG.background) {
+        CONFIG.background = {
+            enabled: true,
+            color: '#000428',
+            colorOriginal: '#000428',
+            opacity: 1.0
+        };
+    }
+    
+    // Ensure colorOriginal exists and is set to the default if not present
+    if (CONFIG.background && !CONFIG.background.colorOriginal) {
+        CONFIG.background.colorOriginal = CONFIG.background.color || '#000428';
+    }
+
+    // Set up background controls
+    if (bgEnabledToggle) {
+        bgEnabledToggle.checked = CONFIG.background.enabled;
+        
+        // Set initial visibility of background controls
+        if (bgControls) {
+            bgControls.style.display = CONFIG.background.enabled ? 'block' : 'none';
+            bgControls.style.transition = 'opacity 0.3s ease, display 0.3s ease';
+        }
+
+        // Toggle background controls visibility
+        bgEnabledToggle.addEventListener('change', (e) => {
+            const isEnabled = e.target.checked;
+            CONFIG.background.enabled = isEnabled;
+            
+            if (bgControls) {
+                bgControls.style.display = isEnabled ? 'block' : 'none';
+                
+                // Apply background changes to the starfield if it exists
+                if (starfield) {
+                    if (isEnabled) {
+                        // When enabling, use the saved color
+                        starfield.setBackgroundColor(CONFIG.background.color, CONFIG.background.opacity);
+                    } else {
+                        // When disabling, use the original color but with 0 opacity
+                        starfield.setBackgroundColor(CONFIG.background.colorOriginal, 0);
+                    }
+                }
+            }
+            
+            // Save the updated configuration
+            saveConfig(CONFIG);
+        });
+    }
 
     // Initialize shooting stars settings with safe defaults if not present
     if (!CONFIG.shootingStar) {
